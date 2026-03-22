@@ -5,6 +5,8 @@ import {
   getAllOrders,
   getUserOrders,
   changeOrderStatus,
+  getOrderStats,
+  getRecentOrders
 } from "../services/orderService.js";
 
 // Đặt đơn COD
@@ -97,4 +99,40 @@ export const updateStatus = async (req, res) => {
     console.log(error);
     res.json({ success: false, message: error.message });
   }
+};
+
+export const stats = async (req, res) => {
+    try {
+        const data = await getOrderStats();
+
+        res.json({
+            success: true,
+            ...data
+        });
+    } catch (error) {
+        console.error("Stats error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Failed to get stats"
+        });
+    }
+};
+
+export const recent = async (req, res) => {
+    try {
+        const orders = await getRecentOrders();
+
+        res.json({
+            success: true,
+            orders
+        });
+    } catch (error) {
+        console.error("Recent orders error:", error);
+
+        res.status(500).json({
+            success: false,
+            message: "Failed to get recent orders"
+        });
+    }
 };

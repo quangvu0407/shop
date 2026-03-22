@@ -1,61 +1,50 @@
-import express from "express"
-import axios from "axios"
-import cors from "cors"
+import express from "express";
+import cors from "cors";
+import { createProxyMiddleware } from "http-proxy-middleware";
 
-const app = express()
+const app = express();
 
 app.use(cors());
-app.use(express.json())
 
-const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+// LƯU Ý: Không dùng express.json() TRƯỚC proxy nếu bạn muốn chuyển tiếp các request POST/PUT 
+// có body (như thêm sản phẩm). Nếu cần dùng, phải thêm logic "fixRequestBody".
+// Ở đây mình để mặc định để proxy tự xử lý stream body hiệu quả nhất.
 
-const proxy = (url) => async (req, res) => {
-  console.log(`FE gửi sang: ${req.originalUrl} -> Gateway chuyển tiếp: ${url}${req.url}`);
-  try {
-    const response = await axios({
-      method: req.method,
-      url: `${url}${req.url}`,
-      data: req.body,
-      headers: req.headers
-    })
-    res.json(response.data)
-  } catch (err) {
-    // Retry once for transient network errors while downstream service is restarting.
-    if (!err.response && req.method === "GET") {
-      try {
-        await sleep(200);
-        const retryResponse = await axios({
-          method: req.method,
-          url: `${url}${req.url}`,
-          headers: req.headers
-        });
-        return res.json(retryResponse.data);
-      } catch (retryErr) {
-        console.error("Lỗi Service (retry):", retryErr.response?.data || retryErr.message);
-        if (retryErr.response) {
-          return res.status(retryErr.response.status).json(retryErr.response.data);
-        }
-        return res.status(503).json({ error: "Service unavailable", detail: retryErr.message });
-      }
+const proxyOptions = (target) => ({
+  target,
+  changeOrigin: true,
+  pathRewrite: (path, req) => {
+    // Log để bạn dễ theo dõi giống
+    console.log(`FE gửi: ${req.originalUrl} -> Gateway chuyển tiếp: ${target}${path}`);
+    return path; 
+  },
+  // Xử lý lỗi và retry (thay thế cho hàm sleep/retry thủ công của bạn)
+  onError: (err, req, res) => {
+    console.error(`Lỗi Service tại ${target}:`, err.message);
+    res.status(503).json({ error: "Service unavailable", detail: err.message });
+  },
+  // Nếu bạn vẫn cần dùng express.json() ở phía trên, hãy uncomment đoạn dưới này:
+  /*
+  onProxyReq: (proxyReq, req, res) => {
+    if (req.body) {
+      const bodyData = JSON.stringify(req.body);
+      proxyReq.setHeader('Content-Type', 'application/json');
+      proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+      proxyReq.write(bodyData);
     }
-
-    console.error("Lỗi Service:", err.response?.data || err.message);
-    if (err.response) {
-      return res.status(err.response.status).json(err.response.data);
-    }
-    res.status(503).json({ error: 'Service unavailable', detail: err.message });
   }
-}
+  */
+});
 
-app.use('/api/user', proxy('http://localhost:3001'))
-app.use('/api/admin', proxy('http://localhost:3001'))
-
-app.use('/api/product', proxy('http://localhost:3002'))
-app.use('/api/cart', proxy('http://localhost:3004'))
-app.use('/api/order', proxy('http://localhost:3003'))
-app.use('/api/chat', proxy('http://localhost:3005'))
-app.use('/api/comment', proxy('http://localhost:3006'))
+// Cấu hình các route
+app.use('/api/user', createProxyMiddleware(proxyOptions('http://localhost:3001')));
+app.use('/api/admin', createProxyMiddleware(proxyOptions('http://localhost:3001')));
+app.use('/api/product', createProxyMiddleware(proxyOptions('http://localhost:3002')));
+app.use('/api/order', createProxyMiddleware(proxyOptions('http://localhost:3003')));
+app.use('/api/cart', createProxyMiddleware(proxyOptions('http://localhost:3004')));
+app.use('/api/chat', createProxyMiddleware(proxyOptions('http://localhost:3005')));
+app.use('/api/comment', createProxyMiddleware(proxyOptions('http://localhost:3006')));
 
 app.listen(3000, () => {
-  console.log('Gateway running on 3000')
-})
+  console.log('🚀 API Gateway running on port 3000');
+});

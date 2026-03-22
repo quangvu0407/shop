@@ -81,3 +81,8 @@ export const changePasswordService = async (userId, { oldPassword, newPassword }
 
   return true;
 };
+
+export const getUsercount = async () => {
+  const count = await userModel.countDocuments();
+  return count;
+}

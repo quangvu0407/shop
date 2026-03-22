@@ -6,7 +6,8 @@ import {
   updateProductById,
   ProductPage,
   decreaseProductsStock,
-  restoreProductsStock
+  restoreProductsStock,
+  getProductCount
 } from "../services/productService.js";
 
 // Thêm
@@ -110,6 +111,24 @@ const restoreStock = async (req, res) => {
   }
 };
 
+const count = async (req, res) => {
+  try {
+    const productCount = await getProductCount();
+
+    res.json({
+      success: true,
+      productCount
+    });
+  } catch (error) {
+    console.error("Product count error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to get product count"
+    });
+  }
+}
+
 export {
   addProduct,
   listProducts,
@@ -118,4 +137,5 @@ export {
   updateProduct,
   decreaseStock,
   restoreStock,
+  count
 };

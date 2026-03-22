@@ -4,10 +4,10 @@ import axiosInstance from "../customize/axios.js";
 import { toast } from "react-toastify";
 
 const Add = () => {
-  const [image1, setImage1] = useState(false);
-  const [image2, setImage2] = useState(false);
-  const [image3, setImage3] = useState(false);
-  const [image4, setImage4] = useState(false);
+  const [image1, setImage1] = useState(null);
+  const [image2, setImage2] = useState(null);
+  const [image3, setImage3] = useState(null);
+  const [image4, setImage4] = useState(null);
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
@@ -15,6 +15,8 @@ const Add = () => {
   const [category, setCategory] = useState("Men");
   const [subCategory, setSubCategory] = useState("Topwear");
   const [bestseller, setBestseller] = useState(false);
+  const [quantity, setQuantity] = useState("");
+  const [promotionIds] = useState([]);
   const [sizes, setSizes] = useState([]);
 
   const onSubmitHandler = async (e) => {
@@ -28,16 +30,19 @@ const Add = () => {
       formData.append("price", price);
       formData.append("category", category);
       formData.append("subCategory", subCategory);
-      formData.append("bestseller", bestseller);
+      formData.append("bestseller", JSON.stringify(bestseller));
       formData.append("sizes", JSON.stringify(sizes));
+      formData.append("quantity", quantity);
+      formData.append("promotionIds", JSON.stringify(promotionIds));
 
       image1 && formData.append("image1", image1);
       image2 && formData.append("image2", image2);
       image3 && formData.append("image3", image3);
       image4 && formData.append("image4", image4);
 
+      console.log("res");
       const data = await axiosInstance.post(
-        "/api/product/add",
+        "/product/add",
         formData,
       );
       console.log(formData);
@@ -47,11 +52,12 @@ const Add = () => {
         toast.success(data.message);
         setName("");
         setDescription("");
-        setImage1(false);
-        setImage2(false);
-        setImage3(false);
-        setImage4(false);
+        setImage1(null);
+        setImage2(null);
+        setImage3(null);
+        setImage4(null);
         setPrice("");
+        setQuantity("");
       } else {
         toast.error(data.message);
         console.log(data);
@@ -184,6 +190,16 @@ const Add = () => {
               className="w-full px-3 py-2 sm:w-[120px]"
               type="Number"
               placeholder="25"
+            />
+          </div>
+          <div>
+            <p className="mb-2">Product quantity</p>
+            <input
+              onChange={(e) => setQuantity(e.target.value)}
+              value={quantity}
+              className="w-full px-3 py-2 sm:w-[120px]"
+              type="Number"
+              placeholder="100"
             />
           </div>
         </div>

@@ -14,7 +14,7 @@ const Orders = ({ token }) => {
 
     try {
       const response = await axiosInstance.post(
-        "/api/order/list",
+        "/order/list",
         {},
       );
       console.log(response.data);
@@ -31,7 +31,7 @@ const Orders = ({ token }) => {
   const statusHandler = async (event, orderId) => {
     try {
       const response = await axiosInstance.post(
-        "/api/order/status",
+        "/order/status",
         { orderId, status: event.target.value }
       );
       if (response.success) {

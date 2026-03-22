@@ -12,6 +12,9 @@ const port = process.env.PORT || 3002
 app.use(express.json())
 app.use(cors())
 
+app.use((req, res, next) => {
+  next();
+});
 app.use('/', productRouter)
 
 const startServer = async () => {

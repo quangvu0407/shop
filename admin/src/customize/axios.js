@@ -4,7 +4,7 @@ export const backendUrl = import.meta.env.VITE_BACKEND_URL
 
 const axiosInstance = axios.create({
   baseURL: backendUrl,
-  timeout: 10000,
+  timeout: 5000,
 });
 
 // 👉 Request interceptor (gắn token)
@@ -27,7 +27,7 @@ axiosInstance.interceptors.response.use(
       console.log("Unauthorized - hết hạn token");
       localStorage.removeItem("token");
       window.location.href = "/";
-    }
+    } 
     return Promise.reject(error);
   }
 );

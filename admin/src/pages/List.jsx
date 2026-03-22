@@ -18,16 +18,16 @@ const List = () => {
   // Form states
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
-  const [category, setCategory] = useState("Phone");
-  const [subCategory, setSubCategory] = useState("Apple");
+  const [category, setCategory] = useState("Women");
+  const [subCategory, setSubCategory] = useState("Topwear");
   const [bestseller, setBestseller] = useState(false);
 
-  const categories = ["Phone", "Charger", "Earphone"];
-  const subCategories = ["Apple", "Samsung", "Xiaomi"];
+  const categories = ["Women", "Men", "Kids"];
+  const subCategories = ["Topwear", "Bottomwear", "Winterwear"];
 
   const fetchList = async () => {
     try {
-      const res = await axiosInstance.get("/api/product/list");
+      const res = await axiosInstance.get("/product/list");
       if (res.success) { setList(res.products); }
     } catch (error) { toast.error("Failed to load inventory"); }
   };
@@ -49,7 +49,7 @@ const List = () => {
       result = result.filter(item => item.category === filterCategory);
     }
 
-    if(filterSubcategory !== "All") {
+    if (filterSubcategory !== "All") {
       result = result.filter(item => item.subCategory === filterSubcategory)
     }
 
@@ -86,7 +86,7 @@ const List = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     try {
-      const res = await axiosInstance.put(`/api/product/${editingProduct._id}`, {
+      const res = await axiosInstance.put(`/product/${editingProduct._id}`, {
         name, price: Number(price), category, subCategory, bestseller
       });
       if (res.success) {
@@ -105,6 +105,21 @@ const List = () => {
       default: return <Tag size={14} />;
     }
   };
+
+  const removeProduct = async (productId) => {
+    try {
+      const confirmDelete = window.confirm("Bạn có chắc muốn xoá sản phẩm này không?");
+      if (!confirmDelete) return;
+      const data = await axiosInstance.delete(`/product/${productId}`);
+      if (data.success) {
+        toast.success("Delete product successfully")
+        console.log(data);
+        fetchList();
+      }
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Update failed");
+    }
+  }
 
   useEffect(() => { fetchList(); }, []);
 
@@ -197,7 +212,7 @@ const List = () => {
                       <button onClick={() => openEditModal(item)} className="p-2 bg-white border border-slate-200 rounded-xl hover:border-indigo-500 hover:text-indigo-600 shadow-sm transition-all active:scale-90">
                         <Pencil size={16} />
                       </button>
-                      <button className="p-2 bg-white border border-slate-200 rounded-xl hover:border-red-500 hover:text-red-600 shadow-sm transition-all active:scale-90">
+                      <button onClick={() => removeProduct(item._id)} className="p-2 bg-white border border-slate-200 rounded-xl hover:border-red-500 hover:text-red-600 shadow-sm transition-all active:scale-90">
                         <Trash2 size={16} />
                       </button>
                     </div>

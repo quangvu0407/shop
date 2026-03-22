@@ -1,41 +1,54 @@
-import orderModel from "../models/orderModel.js";
-import productModel from "../models/productModel.js";
-import userModel from "../models/userModel.js";
+import axios from "axios";
 
 // API lấy thống kê tổng quan cho Dashboard
 const getDashboardStats = async (req, res) => {
-    try {
-        // 1. Tính tổng doanh thu (Sum của tất cả trường amount trong orders)
-        // Lưu ý: Bạn có thể lọc thêm { status: { $ne: 'Cancelled' } } nếu không muốn tính đơn hủy
-        const orders = await orderModel.find({});
-        const totalRevenue = orders.reduce((total, order) => total + order.amount, 0);
+  try {
 
-        // 2. Đếm số lượng đơn hàng, sản phẩm và khách hàng
-        const orderCount = await orderModel.countDocuments({});
-        const productCount = await productModel.countDocuments({});
-        const userCount = await userModel.countDocuments({});
+    // gọi song song qua gateway
+    const config = {
+      headers: {
+        Authorization: req.headers.authorization
+      }
+    };
 
-        // 3. Lấy 5 đơn hàng gần đây nhất để hiển thị bảng Recent Orders
-        const recentOrders = await orderModel.find({})
-            .sort({ date: -1 }) // Sắp xếp theo ngày mới nhất
-            .limit(5);
+    const [
+      orderStatsRes,
+      productCountRes,
+      userCountRes,
+      recentOrdersRes
+    ] = await Promise.all([
+      axios.get("http://localhost:3000/api/order/stats", config),
+      axios.get("http://localhost:3000/api/product/count", config),
+      axios.get("http://localhost:3000/api/user/count", config),
+      axios.get("http://localhost:3000/api/order/recent", config)
+    ]);
 
-        // Trả về đúng cấu trúc mà Frontend của bạn đang dùng (res.data)
-        res.json({
-            success: true,
-            data: {
-                totalRevenue,
-                orderCount,
-                productCount,
-                userCount,
-                recentOrders
-            }
-        });
+    const totalRevenue = orderStatsRes.data.totalRevenue;
+    const orderCount = orderStatsRes.data.orderCount;
+    const productCount = productCountRes.data.productCount;
+    const userCount = userCountRes.data.userCount;
+    const recentOrders = recentOrdersRes.data.orders;
 
-    } catch (error) {
-        console.log("Lỗi Dashboard Stats:", error);
-        res.status(500).json({ success: false, message: error.message });
-    }
-}
+    res.json({
+      success: true,
+      data: {
+        totalRevenue,
+        orderCount,
+        productCount,
+        userCount,
+        recentOrders
+      }
+    });
+
+  } catch (error) {
+    console.log("Lỗi Dashboard Stats:", error.message);
+
+    res.status(500).json({
+      success: false,
+      message: "Dashboard service error",
+      detail: error.message
+    });
+  }
+};
 
 export { getDashboardStats };

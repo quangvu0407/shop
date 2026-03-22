@@ -60,4 +60,21 @@ const changePassword = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser, adminLogin, getUserProfile, updateUserName, changePassword };
+const countUser = async (req, res) => {
+  try {
+    const count = await userService.getUsercount();
+    res.json({
+      success: true,
+      count
+    });
+  } catch (error) {
+    console.error("User count error:", error);
+
+    res.status(500).json({
+      success: false,
+      message: "Failed to get user count"
+    });
+  }
+}
+
+export { loginUser, registerUser, adminLogin, getUserProfile, updateUserName, changePassword, countUser };

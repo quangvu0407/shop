@@ -175,6 +175,11 @@ const restoreProductsStock = async (items = []) => {
   return productIds;
 };
 
+const getProductCount = async () => {
+  const count = await productModel.countDocuments();
+  return count;
+}
+
 export {
   createProduct,
   getAllProducts,
@@ -183,5 +188,6 @@ export {
   updateProductById,
   ProductPage,
   decreaseProductsStock,
-  restoreProductsStock
+  restoreProductsStock,
+  getProductCount
 };

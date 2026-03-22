@@ -138,3 +138,22 @@ export const changeOrderStatus = async ({ orderId, status }) => {
   await orderModel.findByIdAndUpdate(orderId, { status });
   return true;
 };
+
+export const getOrderStats = async () => {
+    const orders = await orderModel.find({});
+
+    const totalRevenue = orders.reduce((sum, o) => sum + o.amount, 0);
+
+    return {
+        totalRevenue,
+        orderCount: orders.length
+    };
+};
+
+export const getRecentOrders = async () => {
+    const orders = await orderModel.find({})
+        .sort({ date: -1 })
+        .limit(5);
+
+    return orders;
+};

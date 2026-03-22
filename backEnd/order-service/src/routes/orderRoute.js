@@ -1,5 +1,5 @@
 import express from 'express'
-import { placeOrder, placeOrderStripe, userOrders, allOrders, updateStatus, verifyStripe} from '../controllers/orderController.js'
+import { placeOrder, placeOrderStripe, userOrders, allOrders, updateStatus, verifyStripe, stats, recent} from '../controllers/orderController.js'
 import adminAuth from '../middleware/adminAuth.js'
 import authUser from '../middleware/auth.js'
 
@@ -19,5 +19,9 @@ orderRouter.post('/userorders', authUser, userOrders)
 
 // Xác thực thanh toán thành công/thất bại
 orderRouter.post('/verifyStripe', authUser, verifyStripe)
+
+//data dashboard
+orderRouter.get("/stats", stats);
+orderRouter.get("/recent", recent);
 
 export default orderRouter
