@@ -6,7 +6,7 @@ import List from "./pages/List";
 import Order from "./pages/Order";
 import Login from './components/Login';
 import { Routes, Route } from "react-router-dom";
-import Home from './pages/home';
+import Home from './pages/Home';
 
 export const currency = "$";
 

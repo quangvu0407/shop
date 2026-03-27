@@ -10,11 +10,11 @@ import Login from './pages/Login'
 import Orders from './pages/Orders'
 import PlaceOrder from './pages/PlaceOrder'
 import Navbar from './components/Menu/Navbar'
-import Hero from './components/Menu/Hero'
 import Footer from './components/Contact/Footer'
 import SearchBar from './components/Menu/SearchBar'
 import Verify from './pages/Verify'
 import Profile from './pages/Profile'
+import ChatBot from './components/ChatBot'
 
 const App = () => {
   return (
@@ -33,9 +33,9 @@ const App = () => {
         <Route path='/orders' element={<Orders />} />
         <Route path='/verify' element={<Verify />} />
         <Route path='/profile' element={<Profile />} />
-        {/* <Route path='/chatBot' element={<EcommerceChatbot />}/> */}
       </Routes>
       <Footer />
+      <ChatBot />
     </div>
   )
 }

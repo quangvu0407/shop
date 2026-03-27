@@ -4,7 +4,7 @@ import Hero from '../components/Menu/Hero'
 import BestSeller from '../components/Product/BestSeller'
 import OurPolicy from '../components/Contact/OurPolicy'
 import NewsletterBox from '../components/Contact/NewsletterBox'
-import ProductPagination from '../components/Product/productPagination'
+import ProductPagination from '../components/Product/ProductPagination'
 
 const Home = () => {
   return (

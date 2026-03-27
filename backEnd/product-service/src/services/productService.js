@@ -54,6 +54,12 @@ const getAllProducts = async () => {
   return await productModel.find({});
 };
 
+// Get product for chatbot
+
+const getProductContext = async () => {
+  return await productModel.find({}).select("_id name price category subCategory sizes quantity bestseller").limit(50);
+};
+
 const ProductPage = async ({ page = 1, limit = 15, category }) => {
   const skip = (page - 1) * limit;
 
@@ -189,5 +195,5 @@ export {
   ProductPage,
   decreaseProductsStock,
   restoreProductsStock,
-  getProductCount
+  getProductCount, getProductContext
 };

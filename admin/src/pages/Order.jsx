@@ -106,13 +106,15 @@ const Orders = ({ token }) => {
             <select
               onChange={(event) => statusHandler(event, order._id)}
               value={order.status}
-              className="p-2 font-semibold"
+              disabled={order.status === "Cancelled"}
+              className={`p-2 font-semibold ${order.status === "Cancelled" ? "text-red-500 bg-red-50 border border-red-200 cursor-not-allowed" : ""}`}
             >
               <option value="Order Placed">Order Placed</option>
               <option value="Packing">Packing</option>
               <option value="Shipped">Shipped</option>
               <option value="Out for delivery">Out for delivery</option>
               <option value="Delivered">Delivered</option>
+              <option value="Cancelled">Cancelled</option>
             </select>
           </div>
         ))}

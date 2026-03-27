@@ -7,7 +7,8 @@ import {
   ProductPage,
   decreaseProductsStock,
   restoreProductsStock,
-  getProductCount
+  getProductCount,
+  getProductContext
 } from "../services/productService.js";
 
 // Thêm
@@ -29,6 +30,15 @@ const listProducts = async (req, res) => {
     res.status(500).json({ success: false, message: error.message });
   }
 };
+
+const productContext = async (req, res) => {
+  try {
+    const products = await getProductContext();
+    res.json({success: true, products})
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+}
 
 export const getProducts = async (req, res) => {
   try {
@@ -137,5 +147,6 @@ export {
   updateProduct,
   decreaseStock,
   restoreStock,
-  count
+  count,
+  productContext
 };

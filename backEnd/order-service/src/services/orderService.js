@@ -135,25 +135,44 @@ export const getUserOrders = async (userId) => {
 };
 
 export const changeOrderStatus = async ({ orderId, status }) => {
+  if (status === "Cancelled") {
+    const order = await orderModel.findById(orderId);
+    if (!order) throw new Error("Không tìm thấy đơn hàng");
+    if (order.status !== "Cancelled") {
+      await restoreStockRemote(order.items);
+    }
+  }
   await orderModel.findByIdAndUpdate(orderId, { status });
   return true;
 };
 
 export const getOrderStats = async () => {
-    const orders = await orderModel.find({});
+  const orders = await orderModel.find({});
 
-    const totalRevenue = orders.reduce((sum, o) => sum + o.amount, 0);
+  const totalRevenue = orders.reduce((sum, o) => sum + o.amount, 0);
 
-    return {
-        totalRevenue,
-        orderCount: orders.length
-    };
+  return {
+    totalRevenue,
+    orderCount: orders.length
+  };
 };
 
 export const getRecentOrders = async () => {
-    const orders = await orderModel.find({})
-        .sort({ date: -1 })
-        .limit(5);
+  const orders = await orderModel.find({})
+    .sort({ date: -1 })
+    .limit(5);
 
-    return orders;
+  return orders;
+};
+
+export const cancelUserOrder = async ({ orderId, userId }) => {
+  const order = await orderModel.findOne({ _id: orderId, userId: String(userId) });
+
+  if (!order) throw new Error("Không tìm thấy đơn hàng");
+  if (order.status !== "Order Placed") throw new Error("Không thể hủy đơn hàng đang vận chuyển hoặc đã hoàn thành");
+
+  await restoreStockRemote(order.items);
+  await orderModel.findByIdAndUpdate(orderId, { status: "Cancelled" });
+
+  return true;
 };

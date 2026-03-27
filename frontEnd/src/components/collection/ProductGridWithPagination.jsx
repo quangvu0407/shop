@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
 import ProductItems from '../Product/ProductItems'
-import Pagination from '../pagination'
+import Pagination from '../Pagination'
 
 const ProductGridWithPagination = ({ products, productsPerPage = 8 }) => {
   const [currentPage, setCurrentPage] = useState(1)

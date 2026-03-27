@@ -1,5 +1,7 @@
 import axios from "axios";
 
+const GATEWAY_URL = process.env.GATEWAY_URL || "http://localhost:3000";
+
 // API lấy thống kê tổng quan cho Dashboard
 const getDashboardStats = async (req, res) => {
   try {
@@ -10,17 +12,17 @@ const getDashboardStats = async (req, res) => {
         Authorization: req.headers.authorization
       }
     };
-
+    console.log(req.headers.authorization);
     const [
       orderStatsRes,
       productCountRes,
       userCountRes,
       recentOrdersRes
     ] = await Promise.all([
-      axios.get("http://localhost:3000/api/order/stats", config),
-      axios.get("http://localhost:3000/api/product/count", config),
-      axios.get("http://localhost:3000/api/user/count", config),
-      axios.get("http://localhost:3000/api/order/recent", config)
+      axios.get(`${GATEWAY_URL}/api/order/stats`, config),
+      axios.get(`${GATEWAY_URL}/api/product/count`, config),
+      axios.get(`${GATEWAY_URL}/api/user/count`, config),
+      axios.get(`${GATEWAY_URL}/api/order/recent`, config)
     ]);
 
     const totalRevenue = orderStatsRes.data.totalRevenue;
@@ -41,12 +43,16 @@ const getDashboardStats = async (req, res) => {
     });
 
   } catch (error) {
-    console.log("Lỗi Dashboard Stats:", error.message);
+    console.log("FULL ERROR:", {
+      message: error.message,
+      data: error.response?.data,
+      status: error.response?.status
+    });
 
     res.status(500).json({
       success: false,
       message: "Dashboard service error",
-      detail: error.message
+      detail: error.response?.data || error.message
     });
   }
 };

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import axiosInstance from '../../customize/axios';
 import Title from '../Title';
 import ProductItems from './ProductItems';
-import Pagination from '../pagination';
+import Pagination from '../Pagination';
 
 const ProductPagination = ({ productsPerPage = 15 }) => {
   const [products, setProducts] = useState([]);

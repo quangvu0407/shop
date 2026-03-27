@@ -26,10 +26,14 @@ const Home = () => {
     try {
       const res = await axiosInstance.get("/admin/dashboard-stats");
       if (res.success) {
+        console.log("success admin")
         setStats(res.data);
       }
+      else {
+        console.log("error admin")
+      }
     } catch (error) {
-      console.error("Error fetching stats", error);
+      console.log("Error fetching stats", error);
     }
   };
 

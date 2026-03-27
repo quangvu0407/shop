@@ -10,7 +10,9 @@ function rethrowWithMessage(err, fallback) {
 
 export async function decreaseStockRemote(items) {
   try {
+    console.log("[decreaseStock] calling", productBase, "items:", JSON.stringify(items));
     const { data } = await axios.post(`${productBase}/stock/decrease`, { items });
+    console.log("[decreaseStock] response:", JSON.stringify(data));
     if (!data?.success) {
       throw new Error(data?.message || "Stock decrease failed");
     }

@@ -4,25 +4,25 @@ import 'dotenv/config'
 import connectDB from "./config/mongodb.js"
 import connectCloudinary from "./config/cloudinary.js"
 
-import productRouter from "./routes/productRoute.js"
+import chatRouter from "./routes/chatRoute.js"
 
 const app = express()
-const port = process.env.PORT || 3002
+const port = process.env.PORT || 3005
 
 app.use(express.json())
 app.use(cors())
 
-app.use('/', productRouter)
+app.use('/', chatRouter)
 
 const startServer = async () => {
   try {
     await connectDB();
     connectCloudinary();
     app.listen(port, () => {
-      console.log("Product service running on " + port);
+      console.log("Chat service running on " + port);
     });
   } catch (error) {
-    console.error("Failed to start product service:", error);
+    console.error("Failed to start chat service:", error);
     process.exit(1);
   }
 };

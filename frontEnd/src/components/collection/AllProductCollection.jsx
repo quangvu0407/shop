@@ -1,28 +1,31 @@
 import React, { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../../context/ShopContext'
 import { assets } from '../../assets/assets';
-import Title from '../Title';
-import ProductItems from '../Product/ProductItems';
 import FilterByCategories from './FilterByCategories';
 import FilterByWear from './FilterByWear';
 import OptionSortCollection from './OptionSortCollection';
 import ProductGridWithPagination from './ProductGridWithPagination'
+import axiosInstance from '../../customize/axios'
 
 const AllProductCollection = () => {
-  const { products, search, showSearch } = useContext(ShopContext);
+  const { search, showSearch } = useContext(ShopContext);
+  const [allProducts, setAllProducts] = useState([]);
   const [showFilter, setShowFilter] = useState(true);
   const [filterProduct, setFilterProduct] = useState([]);
-
   const [category, setCategory] = useState([]);
   const [subCategory, setSubCategory] = useState([]);
-
   const [sortType, setSortType] = useState('relevent');
+
+  useEffect(() => {
+    axiosInstance.get('/product/list').then(data => {
+      if (data.success) setAllProducts(data.products || []);
+    }).catch(console.error);
+  }, []);
 
   const toggleCategory = (ev) => {
     if (category.includes(ev.target.value)) {
       setCategory(prev => prev.filter(item => item != ev.target.value))
-    }
-    else {
+    } else {
       setCategory(prev => [...prev, ev.target.value])
     }
   }
@@ -30,55 +33,43 @@ const AllProductCollection = () => {
   const toggleSubCategory = (ev) => {
     if (subCategory.includes(ev.target.value)) {
       setSubCategory(prev => prev.filter(item => item != ev.target.value))
-    }
-    else {
+    } else {
       setSubCategory(prev => [...prev, ev.target.value])
     }
+  }
+
+  const applyFilter = () => {
+    let productCopy = allProducts.slice();
+    if (showSearch && search) {
+      productCopy = productCopy.filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
+    }
+    if (category.length > 0) {
+      productCopy = productCopy.filter(item => category.includes(item.category));
+    }
+    if (subCategory.length > 0) {
+      productCopy = productCopy.filter(item => subCategory.includes(item.subCategory));
+    }
+    setFilterProduct(productCopy);
   }
 
   const sortProduct = () => {
     let fpCopy = filterProduct.slice();
     switch (sortType) {
       case 'low-high':
-        setFilterProduct(fpCopy.sort((a, b) => (a.price - b.price)));
+        setFilterProduct(fpCopy.sort((a, b) => a.price - b.price));
         break;
       case 'high-low':
-        setFilterProduct(fpCopy.sort((a, b) => (b.price - a.price)));
+        setFilterProduct(fpCopy.sort((a, b) => b.price - a.price));
         break;
       default:
         applyFilter();
         break;
     }
   }
-  const applyFilter = () => {
-    let productCopy = products.slice()
 
-    if (showSearch && search) {
-      productCopy = productCopy.filter(item => item.name.toLowerCase().includes(search.toLowerCase()))
-    }
-
-    if (category.length > 0) {
-      productCopy = productCopy.filter(item => category.includes(item.category));
-    }
-
-    if (subCategory.length > 0) {
-      productCopy = productCopy.filter(item => subCategory.includes(item.subCategory));
-    }
-    console.log(products);
-    setFilterProduct(productCopy)
-  }
-
-  useEffect(() => {
-    setFilterProduct(products);
-  }, [products])
-
-  useEffect(() => {
-    applyFilter();
-  }, [category, subCategory, search, showSearch])
-
-  useEffect(() => {
-    sortProduct();
-  }, [sortType])
+  useEffect(() => { setFilterProduct(allProducts); }, [allProducts]);
+  useEffect(() => { applyFilter(); }, [category, subCategory, search, showSearch, allProducts]);
+  useEffect(() => { sortProduct(); }, [sortType]);
   return (
     <>
       {/* Options */}

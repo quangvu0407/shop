@@ -21,6 +21,7 @@ const Order = () => {
           order.items.forEach((item) => {
             allOrdersItem.push({
               ...item,
+              orderId: order._id,
               status: order.status,
               payment: order.payment,
               paymentMethod: order.paymentMethod,
@@ -36,9 +37,29 @@ const Order = () => {
     }
   };
 
+  const handleCancelOrder = async (orderId) => {
+    if (!window.confirm("Bạn có chắc muốn hủy đơn hàng này?")) return;
+    try {
+      const response = await axiosInstance.post("/order/cancel", { orderId });
+      if (response.success) {
+        toast.success("Đã hủy đơn hàng");
+        loadorderData();
+      } else {
+        toast.error(response.message || "Hủy đơn thất bại");
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Hủy đơn thất bại");
+    }
+  };
+
   useEffect(() => {
     loadorderData();
   }, [token]);
+
+  const statusColor = (status) => {
+    if (status === "Cancelled") return "bg-red-400";
+    return "bg-emerald-500";
+  };
 
   return (
     <div className="border-t pt-10 sm:pt-14 pb-16 min-h-[50vh] bg-gradient-to-b from-stone-50/60 to-white">
@@ -101,18 +122,29 @@ const Order = () => {
               </div>
               <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-3 md:min-w-[140px] shrink-0 border-t md:border-t-0 border-stone-100 pt-4 md:pt-0">
                 <div className="flex items-center gap-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0" />
+                  <span className={`w-2 h-2 rounded-full shrink-0 ${statusColor(item.status)}`} />
                   <span className="text-sm font-medium text-stone-800">
                     {item.status}
                   </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={loadorderData}
-                  className="text-sm font-medium text-stone-700 px-4 py-2 rounded-lg border border-stone-200 hover:bg-stone-50 transition-colors"
-                >
-                  Làm mới
-                </button>
+                <div className="flex gap-2">
+                  {item.status === "Order Placed" && (
+                    <button
+                      type="button"
+                      onClick={() => handleCancelOrder(item.orderId)}
+                      className="text-sm font-medium text-red-600 px-4 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
+                    >
+                      Hủy đơn
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={loadorderData}
+                    className="text-sm font-medium text-stone-700 px-4 py-2 rounded-lg border border-stone-200 hover:bg-stone-50 transition-colors"
+                  >
+                    Làm mới
+                  </button>
+                </div>
               </div>
             </div>
           ))}

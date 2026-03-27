@@ -8,7 +8,8 @@ import {
   updateProduct,
   decreaseStock,
   restoreStock,
-  count
+  count,
+  productContext
 } from "../controllers/productController.js";
 
 import upload from "../middleware/multer.js";
@@ -53,6 +54,9 @@ productRouter.get("/listpage", getProducts)
 // Internal stock update endpoint for order-service
 productRouter.post("/stock/decrease", decreaseStock);
 productRouter.post("/stock/restore", restoreStock);
+
+// Danh sách sản phẩm cho chatbot
+productRouter.get("/productContext", productContext)
 
 // Chi tiết sản phẩm
 productRouter.get("/:id", singleProducts);
