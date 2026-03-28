@@ -31,13 +31,15 @@ Quy tắc QUAN TRỌNG:
 - Query search PHẢI tiếng Anh. Nếu user nhắn tên sản phẩm cụ thể thì giữ NGUYÊN tên đó làm query. Nếu user mô tả chung thì dùng 1-2 từ: "shirt", "jeans", "dress", "top", "jacket"
 - PHẢI search trước để lấy productId thật, KHÔNG tự bịa productId`;
 
-const executeTool = async (action, data, authHeader) => {
+const executeTool = async (action, data, authHeader, productCache) => {
   switch (action) {
     case "search": {
       const products = await searchProducts(data.query);
       if (!products.length) return `Không tìm thấy sản phẩm với từ khóa "${data.query}".`;
+      // Cache lại để dùng khi place_order
+      products.forEach(p => { productCache[p._id.toString()] = p; });
       return products.map(p =>
-        `[ID:${p._id}] ${p.name} | Giá: ${Number(p.price).toLocaleString("vi-VN")}đ | Size: ${(p.sizes || []).join(", ")} | Còn: ${p.quantity > 0 ? p.quantity : "Hết hàng"}`
+        `[ID:${p._id}] ${p.name} | Giá: ${Number(p.price).toLocaleString("vi-VN")}đ | Size: ${(p.sizes || []).join(", ")} | Còn: ${p.quantity > 0 ? p.quantity : "Hết hàng"} | Image: ${(p.image || [])[0] || ""}`
       ).join("\n");
     }
     case "get_orders": {
@@ -53,9 +55,14 @@ const executeTool = async (action, data, authHeader) => {
       const { items, firstName, lastName, street, city, phone } = data;
       const invalidIds = (items || []).filter(i => !/^[a-f\d]{24}$/i.test(i.productId));
       if (invalidIds.length > 0) return `❌ productId không hợp lệ. Hãy search sản phẩm trước.`;
+      // Enrich image từ cache
+      const enrichedItems = (items || []).map(item => {
+        const cached = productCache[item.productId];
+        return { ...item, image: item.image || (cached?.image || []) };
+      });
       const address = { firstName, lastName, street, city, phone };
-      const amount = items.reduce((sum, i) => sum + i.price * i.quantity, 0) + 10;
-      const result = await placeOrderCOD({ items, amount, address, authHeader });
+      const amount = enrichedItems.reduce((sum, i) => sum + i.price * i.quantity, 0) + 10;
+      const result = await placeOrderCOD({ items: enrichedItems, amount, address, authHeader });
       if (result?.success) return `✅ Đặt hàng thành công! Tổng: ${Number(amount).toLocaleString("vi-VN")}đ. Thanh toán khi nhận hàng.`;
       return `❌ Đặt hàng thất bại: ${result?.message || "Lỗi không xác định"}`;
     }
@@ -88,6 +95,7 @@ export const sendMessage = async (userId, userMessage, authHeader) => {
   ];
 
   let assistantMessage = "";
+  const productCache = {}; // cache sản phẩm đã search trong session này
 
   for (let i = 0; i < 5; i++) {
     const response = await client.chat.completions.create({
@@ -113,7 +121,7 @@ export const sendMessage = async (userId, userMessage, authHeader) => {
     }
 
     // Thực thi action
-    const toolResult = await executeTool(parsed.action, parsed, authHeader);
+    const toolResult = await executeTool(parsed.action, parsed, authHeader, productCache);
 
     // Đưa kết quả vào context để model tiếp tục
     messages.push({ role: "assistant", content: raw });

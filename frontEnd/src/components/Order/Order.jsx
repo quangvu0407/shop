@@ -52,6 +52,21 @@ const Order = () => {
     }
   };
 
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm("Xóa đơn hàng đã hủy này?")) return;
+    try {
+      const response = await axiosInstance.post("/order/delete-cancelled", { orderId });
+      if (response.success) {
+        toast.success("Đã xóa đơn hàng");
+        loadorderData();
+      } else {
+        toast.error(response.message || "Xóa thất bại");
+      }
+    } catch (error) {
+      toast.error(error?.response?.data?.message || "Xóa thất bại");
+    }
+  };
+
   useEffect(() => {
     loadorderData();
   }, [token]);
@@ -135,6 +150,15 @@ const Order = () => {
                       className="text-sm font-medium text-red-600 px-4 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
                     >
                       Hủy đơn
+                    </button>
+                  )}
+                  {item.status === "Cancelled" && (
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteOrder(item.orderId)}
+                      className="text-sm font-medium text-stone-500 px-4 py-2 rounded-lg border border-stone-200 hover:bg-stone-50 transition-colors"
+                    >
+                      Xóa
                     </button>
                   )}
                   <button

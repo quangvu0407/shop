@@ -7,7 +7,9 @@ import {
   changeOrderStatus,
   getOrderStats,
   getRecentOrders,
-  cancelUserOrder
+  cancelUserOrder,
+  deleteOrderUser,
+  deleteCancelledOrder,
 } from "../services/orderService.js";
 
 // Đặt đơn COD
@@ -38,7 +40,13 @@ export const placeOrderStripe = async (req, res) => {
     const { items, amount, address } = req.body;
     const { origin } = req.headers;
 
-    const { newOrder, sessionUrl } = await createOrderStripe({ userId, items, amount, address, origin });
+    const { newOrder, sessionUrl } = await createOrderStripe({
+      userId,
+      items,
+      amount,
+      address,
+      origin,
+    });
 
     res.json({ success: true, session_url: sessionUrl });
   } catch (error) {
@@ -102,20 +110,31 @@ export const updateStatus = async (req, res) => {
   }
 };
 
+export const deleteOrder = async (req, res) => {
+  try {
+    const { orderId } = req.body;
+    await deleteOrderUser(orderId);
+    res.json({ success: true, message: "delete success" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
 export const stats = async (req, res) => {
   try {
     const data = await getOrderStats();
 
     res.json({
       success: true,
-      ...data
+      ...data,
     });
   } catch (error) {
     console.error("Stats error:", error);
 
     res.status(500).json({
       success: false,
-      message: "Failed to get stats"
+      message: "Failed to get stats",
     });
   }
 };
@@ -126,14 +145,14 @@ export const recent = async (req, res) => {
 
     res.json({
       success: true,
-      orders
+      orders,
     });
   } catch (error) {
     console.error("Recent orders error:", error);
 
     res.status(500).json({
       success: false,
-      message: "Failed to get recent orders"
+      message: "Failed to get recent orders",
     });
   }
 };
@@ -144,6 +163,18 @@ export const cancelOrder = async (req, res) => {
     const { orderId } = req.body;
     await cancelUserOrder({ orderId, userId });
     res.json({ success: true, message: "Đơn hàng đã được hủy" });
+  } catch (error) {
+    console.log(error);
+    res.json({ success: false, message: error.message });
+  }
+};
+
+export const deleteMyOrder = async (req, res) => {
+  try {
+    const userId = req.user.id;
+    const { orderId } = req.body;
+    await deleteCancelledOrder({ orderId, userId });
+    res.json({ success: true, message: "Đã xóa đơn hàng" });
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });

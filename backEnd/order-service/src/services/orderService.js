@@ -11,7 +11,13 @@ const currency = "usd";
 const deliveryCharge = 10;
 const toStripeCents = (value) => Math.round(Number(value) * 100);
 
-export const createOrderCOD = async ({ userId, items, amount, address, authHeader }) => {
+export const createOrderCOD = async ({
+  userId,
+  items,
+  amount,
+  address,
+  authHeader,
+}) => {
   await decreaseStockRemote(items);
 
   const orderData = {
@@ -42,7 +48,13 @@ export const createOrderCOD = async ({ userId, items, amount, address, authHeade
   return newOrder;
 };
 
-export const createOrderStripe = async ({ userId, items, amount, address, origin }) => {
+export const createOrderStripe = async ({
+  userId,
+  items,
+  amount,
+  address,
+  origin,
+}) => {
   const orderData = {
     userId,
     items,
@@ -84,17 +96,26 @@ export const createOrderStripe = async ({ userId, items, amount, address, origin
   return { newOrder, sessionUrl: session.url };
 };
 
-export const verifyStripePayment = async ({ userId, orderId, success, authHeader }) => {
+export const verifyStripePayment = async ({
+  userId,
+  orderId,
+  success,
+  authHeader,
+}) => {
   if (success === "true") {
     const order = await orderModel.findOneAndUpdate(
       { _id: orderId, userId: String(userId), payment: false },
       { $set: { payment: true } },
-      { new: true }
+      { new: true },
     );
 
     if (!order) {
       const existing = await orderModel.findById(orderId);
-      if (existing && String(existing.userId) === String(userId) && existing.payment) {
+      if (
+        existing &&
+        String(existing.userId) === String(userId) &&
+        existing.payment
+      ) {
         try {
           await clearCartRemote(authHeader);
         } catch {
@@ -146,6 +167,22 @@ export const changeOrderStatus = async ({ orderId, status }) => {
   return true;
 };
 
+export const deleteOrderUser = async (orderId) => {
+  const order = await orderModel.findById(orderId);
+  if (!order) throw new Error("Không tìm thấy đơn hàng");
+
+  // Restore stock nếu đơn chưa bị hủy và đã giảm stock (COD hoặc Stripe đã thanh toán)
+  const shouldRestore = order.status !== "Cancelled" && order.status !== "Order Placed" ||
+    (order.status === "Order Placed" && order.paymentMethod === "COD") ||
+    (order.paymentMethod === "Stripe" && order.payment === true);
+
+  if (order.status !== "Cancelled" && (order.paymentMethod === "COD" || order.payment === true)) {
+    try { await restoreStockRemote(order.items); } catch { /* best effort */ }
+  }
+
+  return await orderModel.findByIdAndDelete(orderId);
+};
+
 export const getOrderStats = async () => {
   const orders = await orderModel.find({});
 
@@ -153,26 +190,37 @@ export const getOrderStats = async () => {
 
   return {
     totalRevenue,
-    orderCount: orders.length
+    orderCount: orders.length,
   };
 };
 
 export const getRecentOrders = async () => {
-  const orders = await orderModel.find({})
-    .sort({ date: -1 })
-    .limit(5);
+  const orders = await orderModel.find({}).sort({ date: -1 }).limit(5);
 
   return orders;
 };
 
 export const cancelUserOrder = async ({ orderId, userId }) => {
-  const order = await orderModel.findOne({ _id: orderId, userId: String(userId) });
+  const order = await orderModel.findOne({
+    _id: orderId,
+    userId: String(userId),
+  });
 
   if (!order) throw new Error("Không tìm thấy đơn hàng");
-  if (order.status !== "Order Placed") throw new Error("Không thể hủy đơn hàng đang vận chuyển hoặc đã hoàn thành");
+  if (order.status !== "Order Placed")
+    throw new Error(
+      "Không thể hủy đơn hàng đang vận chuyển hoặc đã hoàn thành",
+    );
 
   await restoreStockRemote(order.items);
   await orderModel.findByIdAndUpdate(orderId, { status: "Cancelled" });
 
   return true;
+};
+
+export const deleteCancelledOrder = async ({ orderId, userId }) => {
+  const order = await orderModel.findOne({ _id: orderId, userId: String(userId) });
+  if (!order) throw new Error("Không tìm thấy đơn hàng");
+  if (order.status !== "Cancelled") throw new Error("Chỉ có thể xóa đơn hàng đã hủy");
+  return await orderModel.findByIdAndDelete(orderId);
 };

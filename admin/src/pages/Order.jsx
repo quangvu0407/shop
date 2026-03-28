@@ -8,16 +8,9 @@ const Orders = ({ token }) => {
   const [orders, setOrders] = useState([]);
 
   const fetchAllOrders = async () => {
-    if (!token) {
-      return null;
-    }
-
+    if (!token) return null;
     try {
-      const response = await axiosInstance.post(
-        "/order/list",
-        {},
-      );
-      console.log(response.data);
+      const response = await axiosInstance.post("/order/list", {});
       if (response.success) {
         setOrders(response.orders.reverse());
       } else {
@@ -30,16 +23,26 @@ const Orders = ({ token }) => {
 
   const statusHandler = async (event, orderId) => {
     try {
-      const response = await axiosInstance.post(
-        "/order/status",
-        { orderId, status: event.target.value }
-      );
-      if (response.success) {
-        await fetchAllOrders();
-      }
+      const response = await axiosInstance.post("/order/status", { orderId, status: event.target.value });
+      if (response.success) await fetchAllOrders();
     } catch (error) {
       console.log(error);
-      toast.error(response.message);
+      toast.error(error.message);
+    }
+  };
+
+  const deleteHandler = async (orderId) => {
+    if (!window.confirm("Xóa đơn hàng này?")) return;
+    try {
+      const response = await axiosInstance.post("/order/delete", { orderId });
+      if (response.success) {
+        toast.success("Đã xóa đơn hàng");
+        await fetchAllOrders();
+      } else {
+        toast.error(response.message);
+      }
+    } catch (error) {
+      toast.error(error.message);
     }
   };
 
@@ -103,19 +106,27 @@ const Orders = ({ token }) => {
             <p className="text-sm sm:text-[15px]">
               {currency} {order.amount}
             </p>
-            <select
-              onChange={(event) => statusHandler(event, order._id)}
-              value={order.status}
-              disabled={order.status === "Cancelled"}
-              className={`p-2 font-semibold ${order.status === "Cancelled" ? "text-red-500 bg-red-50 border border-red-200 cursor-not-allowed" : ""}`}
-            >
-              <option value="Order Placed">Order Placed</option>
-              <option value="Packing">Packing</option>
-              <option value="Shipped">Shipped</option>
-              <option value="Out for delivery">Out for delivery</option>
-              <option value="Delivered">Delivered</option>
-              <option value="Cancelled">Cancelled</option>
-            </select>
+            <div className="flex flex-col gap-2">
+              <select
+                onChange={(event) => statusHandler(event, order._id)}
+                value={order.status}
+                disabled={order.status === "Cancelled"}
+                className={`p-2 font-semibold ${order.status === "Cancelled" ? "text-red-500 bg-red-50 border border-red-200 cursor-not-allowed" : ""}`}
+              >
+                <option value="Order Placed">Order Placed</option>
+                <option value="Packing">Packing</option>
+                <option value="Shipped">Shipped</option>
+                <option value="Out for delivery">Out for delivery</option>
+                <option value="Delivered">Delivered</option>
+                <option value="Cancelled">Cancelled</option>
+              </select>
+              <button
+                onClick={() => deleteHandler(order._id)}
+                className="p-2 text-xs font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-colors rounded"
+              >
+                Xóa đơn
+              </button>
+            </div>
           </div>
         ))}
       </div>

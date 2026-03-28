@@ -2,22 +2,6 @@ import axios from "axios";
 
 const GATEWAY = process.env.PRODUCT_API || "http://localhost:3000/api";
 
-// Lấy danh sách sản phẩm làm context RAG
-export const fetchProductContext = async () => {
-  try {
-    const res = await axios.get(`${GATEWAY}/product/productContext`);
-    if (res.data?.success && res.data?.products) {
-      const products = res.data.products;
-      if (!products.length) return "";
-      return products.map(p =>
-        `[ID:${p._id}] ${p.name} | Danh mục: ${p.category}/${p.subCategory} | Giá: ${Number(p.price).toLocaleString("vi-VN")}đ | Size: ${(p.sizes || []).join(", ")} | Còn: ${p.quantity > 0 ? p.quantity : "Hết hàng"}${p.bestseller ? " | ⭐Bestseller" : ""}`
-      ).join("\n");
-    }
-    return "";
-  } catch {
-    return "";
-  }
-};
 
 // Lấy đơn hàng của user
 export const fetchUserOrders = async (authHeader) => {
