@@ -79,7 +79,7 @@ export const searchProducts = async (query) => {
         const aliasMatch = aliasWords.some(a => name.includes(a) || cat.includes(a) || sub.includes(a));
         return exactMatch || wordMatch || aliasMatch;
       })
-      .slice(0, 5);
+      .slice(0, 8);
 
     console.log("[Search] results:", results.map(p => p.name));
     return results;

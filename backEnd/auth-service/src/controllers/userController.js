@@ -1,10 +1,26 @@
 import * as userService from "../service/userService.js";
 import jwt from "jsonwebtoken";
 
+const facebookCallback = async (req, res) => {
+  try {
+    const user = req.user;
+    const access_token = jwt.sign({ id: String(user._id) }, process.env.JWT_SECRET, { expiresIn: "15m" });
+    const refresh_token = jwt.sign({ id: String(user._id) }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
+    user.refreshToken = refresh_token;
+    await user.save();
+
+    // Redirect về FE kèm token trong query string
+    const clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+    res.redirect(`${clientUrl}/auth/callback?access_token=${access_token}&refresh_token=${refresh_token}`);
+  } catch (error) {
+    res.redirect(`${process.env.CLIENT_URL || "http://localhost:5173"}/login?error=facebook_failed`);
+  }
+};
+
 const loginUser = async (req, res) => {
   try {
-    const token = await userService.loginService(req.body);
-    res.json({ success: true, token });
+    const { access_token, refresh_token } = await userService.loginService(req.body);
+    res.json({ success: true, access_token, refresh_token });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -12,8 +28,8 @@ const loginUser = async (req, res) => {
 
 const registerUser = async (req, res) => {
   try {
-    const { token } = await userService.registerService(req.body);
-    res.json({ success: true, token });
+    const { access_token, refresh_token } = await userService.registerService(req.body);
+    res.json({ success: true, access_token, refresh_token });
   } catch (error) {
     res.json({ success: false, message: error.message });
   }
@@ -77,4 +93,23 @@ const countUser = async (req, res) => {
   }
 }
 
-export { loginUser, registerUser, adminLogin, getUserProfile, updateUserName, changePassword, countUser };
+const refreshToken = async (req, res) => {
+  try {
+    const { refresh_token } = req.body;
+    const tokens = await userService.refreshTokenService(refresh_token);
+    res.json({ success: true, ...tokens });
+  } catch (error) {
+    res.status(401).json({ success: false, message: error.message });
+  }
+};
+
+const logoutUser = async (req, res) => {
+  try {
+    await userService.logoutService(req.user.id);
+    res.json({ success: true, message: "Logged out successfully" });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
+
+export { loginUser, registerUser, adminLogin, getUserProfile, updateUserName, changePassword, countUser, refreshToken, logoutUser, facebookCallback };

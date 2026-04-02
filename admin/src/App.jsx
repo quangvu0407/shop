@@ -7,6 +7,7 @@ import Order from "./pages/Order";
 import Login from './components/Login';
 import { Routes, Route } from "react-router-dom";
 import Home from './pages/Home';
+import AuthCallback from './pages/AuthCallback';
 
 export const currency = "$";
 
@@ -21,7 +22,12 @@ const App = () => {
     <div className='bg-gray-50 min-h-screen'>
       {
         token === ""
-          ? <Login setToken={setToken} />
+          ? <>
+            <Login setToken={setToken} />
+            <Routes>
+              <Route path="/auth/callback" element={<AuthCallback setToken={setToken} />} />
+            </Routes>
+          </>
           :
           <>
             <Navbar setToken={setToken} />
@@ -33,7 +39,7 @@ const App = () => {
                   <Route path="/" element={<Home />} />
                   <Route path="/add" element={<Add />} />
                   <Route path="/list" element={<List />} />
-                  <Route path="/order" element={<Order token={token}/>} />
+                  <Route path="/order" element={<Order token={token} />} />
                 </Routes>
               </div>
             </div>

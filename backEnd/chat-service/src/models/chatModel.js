@@ -9,7 +9,9 @@ const messageSchema = new mongoose.Schema({
 const chatSchema = new mongoose.Schema({
   userId: { type: String, required: true, index: true },
   messages: [messageSchema],
-  updatedAt: { type: Date, default: Date.now }
+  updatedAt: { type: Date, default: Date.now },
+  productCache: { type: Map, of: Object, default: {} },
+  userPrefs: { type: Object, default: {} },
 });
 
 const chatModel = mongoose.models.chat || mongoose.model("chat", chatSchema);

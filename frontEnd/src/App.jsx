@@ -15,6 +15,7 @@ import SearchBar from './components/Menu/SearchBar'
 import Verify from './pages/Verify'
 import Profile from './pages/Profile'
 import ChatBot from './components/ChatBot'
+import AuthCallback from './pages/AuthCallback'
 
 const App = () => {
   return (
@@ -33,6 +34,7 @@ const App = () => {
         <Route path='/orders' element={<Orders />} />
         <Route path='/verify' element={<Verify />} />
         <Route path='/profile' element={<Profile />} />
+        <Route path='/auth/callback' element={<AuthCallback />} />
       </Routes>
       <Footer />
       <ChatBot />

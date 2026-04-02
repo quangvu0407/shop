@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useContext } from "react";
+import ReactMarkdown from "react-markdown";
 import axiosInstance from "../customize/axios";
 import { ShopContext } from "../context/ShopContext";
 
@@ -25,16 +26,38 @@ const TypingDots = () => (
   </div>
 );
 
+const markdownComponents = {
+  a: ({ href, children }) => (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-indigo-500 underline underline-offset-2 hover:text-indigo-700 font-medium transition-colors"
+    >
+      {children}
+    </a>
+  ),
+  strong: ({ children }) => <span className="font-semibold">{children}</span>,
+  p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
+  ul: ({ children }) => <ul className="list-disc list-inside space-y-0.5 my-1">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal list-inside space-y-0.5 my-1">{children}</ol>,
+  li: ({ children }) => <li className="text-sm">{children}</li>,
+};
+
 const Message = ({ msg }) => (
   <div className={`flex items-end gap-2 animate-fadeIn ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
     {msg.role === "assistant" && <BotAvatar />}
     <div
-      className={`max-w-[78%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed whitespace-pre-wrap break-words ${msg.role === "user"
-          ? "bg-gradient-to-br from-stone-800 to-stone-900 text-white rounded-br-sm shadow-md"
-          : "bg-white text-stone-800 border border-stone-100 rounded-bl-sm shadow-sm"
+      className={`max-w-[78%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${msg.role === "user"
+        ? "bg-gradient-to-br from-stone-800 to-stone-900 text-white rounded-br-sm shadow-md"
+        : "bg-white text-stone-800 border border-stone-100 rounded-bl-sm shadow-sm"
         }`}
     >
-      {msg.content}
+      {msg.role === "assistant" ? (
+        <ReactMarkdown components={markdownComponents}>{msg.content}</ReactMarkdown>
+      ) : (
+        <span className="whitespace-pre-wrap">{msg.content}</span>
+      )}
     </div>
   </div>
 );

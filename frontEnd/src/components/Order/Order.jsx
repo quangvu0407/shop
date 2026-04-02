@@ -3,10 +3,13 @@ import { ShopContext } from "../../context/ShopContext";
 import Title from "../Title";
 import { toast } from "react-toastify";
 import axiosInstance from "../../customize/axios";
+import OrderDetail from "./OrderDetail";
 
 const Order = () => {
   const { token, currency, navigate } = useContext(ShopContext);
   const [orderData, setorderData] = useState([]);
+  const [open, setOpen] = useState(false);
+  const [data, setData] = useState("");
 
   const loadorderData = async () => {
     try {
@@ -55,7 +58,9 @@ const Order = () => {
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm("Xóa đơn hàng đã hủy này?")) return;
     try {
-      const response = await axiosInstance.post("/order/delete-cancelled", { orderId });
+      const response = await axiosInstance.post("/order/delete-cancelled", {
+        orderId,
+      });
       if (response.success) {
         toast.success("Đã xóa đơn hàng");
         loadorderData();
@@ -75,6 +80,15 @@ const Order = () => {
     if (status === "Cancelled") return "bg-red-400";
     return "bg-emerald-500";
   };
+
+  const loadData = (item) => {
+    setOpen(!open);
+    setData(item);
+  };
+
+  useEffect(() => {
+    console.log("Data changed:", data);
+  }, [data]);
 
   return (
     <div className="border-t pt-10 sm:pt-14 pb-16 min-h-[50vh] bg-gradient-to-b from-stone-50/60 to-white">
@@ -137,7 +151,9 @@ const Order = () => {
               </div>
               <div className="flex md:flex-col items-center md:items-end justify-between md:justify-center gap-3 md:min-w-[140px] shrink-0 border-t md:border-t-0 border-stone-100 pt-4 md:pt-0">
                 <div className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${statusColor(item.status)}`} />
+                  <span
+                    className={`w-2 h-2 rounded-full shrink-0 ${statusColor(item.status)}`}
+                  />
                   <span className="text-sm font-medium text-stone-800">
                     {item.status}
                   </span>
@@ -164,15 +180,27 @@ const Order = () => {
                   <button
                     type="button"
                     onClick={loadorderData}
-                    className="text-sm font-medium text-stone-700 px-4 py-2 rounded-lg border border-stone-200 hover:bg-stone-50 transition-colors"
+                    className="text-sm font-medium text-stone-700 w-25 px-4 py-2 rounded-lg border border-stone-200 hover:bg-stone-50 transition-colors"
                   >
                     Làm mới
+                  </button>
+                </div>
+                <div>
+                  <button
+                    type="button"
+                    onClick={() => loadData(item)}
+                    className="text-sm font-medium text-stone-700 w-25 px-4 py-2 rounded-lg border border-stone-200 hover:bg-stone-50 transition-colors"
+                  >
+                    Chi tiết
                   </button>
                 </div>
               </div>
             </div>
           ))}
         </div>
+      )}
+      {open && data && (
+        <OrderDetail data={data} setOpen={setOpen} setData={setData} />
       )}
     </div>
   );

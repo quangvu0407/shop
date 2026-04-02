@@ -11,6 +11,7 @@ const Navbar = () => {
   const logout = () => {
     navigate('/login')
     localStorage.removeItem('token')
+    localStorage.removeItem('refresh_token')
     setToken('')
     setCartItems([])
   }

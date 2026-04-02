@@ -5,9 +5,14 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import validator from "validator";
 
-// Helper để tạo token (id luôn string để decode ổn định)
+// Helper tạo access_token (15 phút)
 const createToken = (id) => {
-  return jwt.sign({ id: String(id) }, process.env.JWT_SECRET);
+  return jwt.sign({ id: String(id) }, process.env.JWT_SECRET, { expiresIn: "15m" });
+};
+
+// Helper tạo refresh_token (7 ngày)
+const createRefreshToken = (id) => {
+  return jwt.sign({ id: String(id) }, process.env.JWT_REFRESH_SECRET, { expiresIn: "7d" });
 };
 
 // 1. Service Đăng ký
@@ -24,7 +29,12 @@ export const registerService = async ({ name, email, password }) => {
   const newUser = new userModel({ name, email, password: hashedPassword });
   const user = await newUser.save();
 
-  return { token: createToken(user._id), user };
+  const access_token = createToken(user._id);
+  const refresh_token = createRefreshToken(user._id);
+  user.refreshToken = refresh_token;
+  await user.save();
+
+  return { access_token, refresh_token, user };
 };
 
 // 2. Service Đăng nhập User
@@ -35,7 +45,12 @@ export const loginService = async ({ email, password }) => {
   const isMatch = await bcrypt.compare(password, user.password);
   if (!isMatch) throw new Error("Invalid password");
 
-  return createToken(user._id);
+  const access_token = createToken(user._id);
+  const refresh_token = createRefreshToken(user._id);
+  user.refreshToken = refresh_token;
+  await user.save();
+
+  return { access_token, refresh_token };
 };
 
 // 3. Service Lấy Profile (orderCount lấy từ order-service ở FE hoặc mở rộng sau)
@@ -55,13 +70,13 @@ export const getProfileService = async (userId) => {
 // 4. Service Cập nhật tên
 export const updateNameService = async (userId, newName) => {
   if (!newName) throw new Error("Input your new name");
-  
+
   const user = await userModel.findByIdAndUpdate(
     userId,
     { name: newName },
     { new: true }
   ).select('-password');
-  
+
   return user;
 };
 
@@ -86,3 +101,32 @@ export const getUsercount = async () => {
   const count = await userModel.countDocuments();
   return count;
 }
+
+// 6. Service Refresh Token
+export const refreshTokenService = async (refreshToken) => {
+  if (!refreshToken) throw new Error("No refresh token provided");
+
+  let payload;
+  try {
+    payload = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+  } catch {
+    throw new Error("Invalid or expired refresh token");
+  }
+
+  const user = await userModel.findById(payload.id);
+  if (!user || user.refreshToken !== refreshToken) {
+    throw new Error("Refresh token mismatch");
+  }
+
+  const access_token = createToken(user._id);
+  const new_refresh_token = createRefreshToken(user._id);
+  user.refreshToken = new_refresh_token;
+  await user.save();
+
+  return { access_token, refresh_token: new_refresh_token };
+};
+
+// 7. Service Logout — xóa refresh token
+export const logoutService = async (userId) => {
+  await userModel.findByIdAndUpdate(userId, { refreshToken: null });
+};

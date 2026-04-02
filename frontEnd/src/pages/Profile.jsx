@@ -109,6 +109,7 @@ const Profile = () => {
 
   const logout = () => {
     localStorage.removeItem("token");
+    localStorage.removeItem("refresh_token");
     setToken("");
     setCartItems([]);
     navigate("/login");
