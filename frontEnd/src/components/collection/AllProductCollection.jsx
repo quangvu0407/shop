@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react'
+import { useContext, useEffect, useState } from 'react'
 import { ShopContext } from '../../context/ShopContext'
 import { assets } from '../../assets/assets';
 import FilterByCategories from './FilterByCategories';
@@ -9,67 +9,42 @@ import axiosInstance from '../../customize/axios'
 
 const AllProductCollection = () => {
   const { search, showSearch } = useContext(ShopContext);
-  const [allProducts, setAllProducts] = useState([]);
   const [showFilter, setShowFilter] = useState(true);
   const [filterProduct, setFilterProduct] = useState([]);
   const [category, setCategory] = useState([]);
   const [subCategory, setSubCategory] = useState([]);
   const [sortType, setSortType] = useState('relevent');
+  const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
 
-  useEffect(() => {
-    axiosInstance.get('/product/list').then(data => {
-      if (data.success) setAllProducts(data.products || []);
+  const fetchProducts = (page = 1) => {
+    const params = new URLSearchParams({ page, limit: 8 });
+    if (category.length > 0) params.set('category', category.join(','));
+    if (subCategory.length > 0) params.set('subCategory', subCategory.join(','));
+    if (showSearch && search) params.set('search', search);
+    if (sortType !== 'relevent') params.set('sort', sortType);
+
+    axiosInstance.get(`/product/listpage?${params}`).then(data => {
+      if (data.success) {
+        setFilterProduct(data.data || []);
+        setPagination({ page: data.page, totalPages: data.totalPages });
+      }
     }).catch(console.error);
-  }, []);
+  };
 
   const toggleCategory = (ev) => {
-    if (category.includes(ev.target.value)) {
-      setCategory(prev => prev.filter(item => item != ev.target.value))
-    } else {
-      setCategory(prev => [...prev, ev.target.value])
-    }
-  }
+    setCategory(prev =>
+      prev.includes(ev.target.value) ? prev.filter(i => i !== ev.target.value) : [...prev, ev.target.value]
+    );
+  };
 
   const toggleSubCategory = (ev) => {
-    if (subCategory.includes(ev.target.value)) {
-      setSubCategory(prev => prev.filter(item => item != ev.target.value))
-    } else {
-      setSubCategory(prev => [...prev, ev.target.value])
-    }
-  }
+    setSubCategory(prev =>
+      prev.includes(ev.target.value) ? prev.filter(i => i !== ev.target.value) : [...prev, ev.target.value]
+    );
+  };
 
-  const applyFilter = () => {
-    let productCopy = allProducts.slice();
-    if (showSearch && search) {
-      productCopy = productCopy.filter(item => item.name.toLowerCase().includes(search.toLowerCase()));
-    }
-    if (category.length > 0) {
-      productCopy = productCopy.filter(item => category.includes(item.category));
-    }
-    if (subCategory.length > 0) {
-      productCopy = productCopy.filter(item => subCategory.includes(item.subCategory));
-    }
-    setFilterProduct(productCopy);
-  }
+  useEffect(() => { fetchProducts(1); }, [category, subCategory, sortType, search, showSearch]);
 
-  const sortProduct = () => {
-    let fpCopy = filterProduct.slice();
-    switch (sortType) {
-      case 'low-high':
-        setFilterProduct(fpCopy.sort((a, b) => a.price - b.price));
-        break;
-      case 'high-low':
-        setFilterProduct(fpCopy.sort((a, b) => b.price - a.price));
-        break;
-      default:
-        applyFilter();
-        break;
-    }
-  }
-
-  useEffect(() => { setFilterProduct(allProducts); }, [allProducts]);
-  useEffect(() => { applyFilter(); }, [category, subCategory, search, showSearch, allProducts]);
-  useEffect(() => { sortProduct(); }, [sortType]);
   return (
     <>
       {/* Options */}
@@ -93,6 +68,9 @@ const AllProductCollection = () => {
         <ProductGridWithPagination
           products={filterProduct}
           productsPerPage={8}
+          totalPages={pagination.totalPages}
+          currentPage={pagination.page}
+          onPageChange={(page) => fetchProducts(page)}
         />
       </div>
     </>

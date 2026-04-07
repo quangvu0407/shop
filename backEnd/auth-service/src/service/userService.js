@@ -100,7 +100,11 @@ export const changePasswordService = async (userId, { oldPassword, newPassword }
 export const getUsercount = async () => {
   const count = await userModel.countDocuments();
   return count;
-}
+};
+
+export const listUsersService = async () => {
+  return await userModel.find({}).select("_id name email").lean();
+};
 
 // 6. Service Refresh Token
 export const refreshTokenService = async (refreshToken) => {

@@ -4,6 +4,7 @@ import {
   decreaseStockRemote,
   restoreStockRemote,
   clearCartRemote,
+  confirmPromoUsage,
 } from "../utils/internalClients.js";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
@@ -17,6 +18,7 @@ export const createOrderCOD = async ({
   amount,
   address,
   authHeader,
+  promoIds,
 }) => {
   await decreaseStockRemote(items);
 
@@ -44,6 +46,9 @@ export const createOrderCOD = async ({
     console.error("Clear cart after COD order failed:", clearErr);
     throw clearErr;
   }
+
+  // Tăng usedCount cho các mã đã dùng
+  await confirmPromoUsage(promoIds || [], userId);
 
   return newOrder;
 };

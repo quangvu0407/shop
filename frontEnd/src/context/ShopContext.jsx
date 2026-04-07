@@ -56,11 +56,25 @@ const ShopContextProvider = (props) => {
 
   const getUserCart = async () => {
     try {
-      const response = await axiosInstance.get("/cart/get",
-        {}
-      );
+      const response = await axiosInstance.get("/cart/get", {});
       if (response.success) {
         setCartItems(response.cartData);
+        // Fetch các product trong cart mà chưa có trong products state
+        if (response.cartData?.length > 0) {
+          const missingIds = response.cartData
+            .map((i) => i.productId)
+            .filter((id) => !products.some((p) => String(p._id) === String(id)));
+          if (missingIds.length > 0) {
+            const batchRes = await axiosInstance.post("/product/batch", { ids: missingIds });
+            if (batchRes.success && batchRes.products?.length > 0) {
+              setProducts((prev) => {
+                const existingIds = new Set(prev.map((p) => String(p._id)));
+                const newOnes = batchRes.products.filter((p) => !existingIds.has(String(p._id)));
+                return [...prev, ...newOnes];
+              });
+            }
+          }
+        }
       }
     } catch (error) {
       console.log(error);

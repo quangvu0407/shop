@@ -1,21 +1,28 @@
 import axiosInstance from "../customize/axios";
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { currency } from "../App";
 import { toast } from "react-toastify";
-import { Pencil, Trash2, X, Smartphone, Zap, Headphones, CheckCircle2, Search, ArrowUpDown, Tag } from "lucide-react";
+import {
+  Pencil, Trash2, X, User, Users, Baby,
+  CheckCircle2, Search, ArrowUpDown, Tag, ChevronLeft, ChevronRight
+} from "lucide-react";
+
+const LIMIT = 15;
 
 const List = () => {
   const [list, setList] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(1);
+  const [page, setPage] = useState(1);
+
+  const [searchTerm, setSearchTerm] = useState("");
+  const [searchInput, setSearchInput] = useState("");
+  const [sortConfig, setSortConfig] = useState("");
+  const [filterCategory, setFilterCategory] = useState("");
+  const [filterSubcategory, setFilterSubcategory] = useState("");
+
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState(null);
-
-  // Search & Filter States
-  const [searchTerm, setSearchTerm] = useState("");
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [filterCategory, setFilterCategory] = useState("All");
-  const [filterSubcategory, setFilterSubcategory] = useState("All");
-
-  // Form states
   const [name, setName] = useState("");
   const [price, setPrice] = useState("");
   const [category, setCategory] = useState("Women");
@@ -25,54 +32,37 @@ const List = () => {
   const categories = ["Women", "Men", "Kids"];
   const subCategories = ["Topwear", "Bottomwear", "Winterwear"];
 
-  const fetchList = async () => {
+  const fetchList = useCallback(async () => {
     try {
-      const res = await axiosInstance.get("/product/list");
-      if (res.success) { setList(res.products); }
-    } catch (error) { toast.error("Failed to load inventory"); }
+      const params = new URLSearchParams({ page, limit: LIMIT });
+      if (filterCategory) params.append("category", filterCategory);
+      if (filterSubcategory) params.append("subCategory", filterSubcategory);
+      if (searchTerm) params.append("search", searchTerm);
+      if (sortConfig) params.append("sort", sortConfig);
+
+      const res = await axiosInstance.get(`/product/listpage?${params}`);
+      if (res.success) {
+        setList(res.data);
+        setTotal(res.total);
+        setTotalPages(res.totalPages);
+      }
+    } catch {
+      toast.error("Failed to load inventory");
+    }
+  }, [page, filterCategory, filterSubcategory, searchTerm, sortConfig]);
+
+  useEffect(() => { fetchList(); }, [fetchList]);
+  useEffect(() => { setPage(1); }, [filterCategory, filterSubcategory, searchTerm, sortConfig]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setSearchTerm(searchInput);
   };
 
-  // Logic Xử lý Tìm kiếm và Sắp xếp (Dùng useMemo để tối ưu hiệu năng)
-  const filteredAndSortedList = useMemo(() => {
-    let result = [...list];
-
-    // 1. Search logic
-    if (searchTerm) {
-      result = result.filter(item =>
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        item.subCategory.toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    }
-
-    // 2. Filter theo Category
-    if (filterCategory !== "All") {
-      result = result.filter(item => item.category === filterCategory);
-    }
-
-    if (filterSubcategory !== "All") {
-      result = result.filter(item => item.subCategory === filterSubcategory)
-    }
-
-    // 3. Sort logic
-    if (sortConfig.key) {
-      result.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) return sortConfig.direction === 'asc' ? -1 : 1;
-        if (a[sortConfig.key] > b[sortConfig.key]) return sortConfig.direction === 'asc' ? 1 : -1;
-        return 0;
-      });
-    }
-    return result;
-  }, [list, searchTerm, filterCategory, sortConfig, filterSubcategory]);
-
-  const requestSort = (key) => {
-    let direction = 'asc';
-    if (sortConfig.key === key && sortConfig.direction === 'asc') {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
+  const requestSort = () => {
+    setSortConfig(prev => prev === "low-high" ? "high-low" : "low-high");
   };
 
-  // ... (giữ nguyên các hàm openEditModal, handleUpdate, getCategoryIcon từ code cũ của bạn)
   const openEditModal = (product) => {
     setEditingProduct(product);
     setName(product.name);
@@ -94,104 +84,103 @@ const List = () => {
         setIsEditModalOpen(false);
         fetchList();
       }
-    } catch (error) { toast.error(error.response?.data?.message || "Update failed"); }
-  };
-
-  const getCategoryIcon = (cat) => {
-    switch (cat) {
-      case 'Phone': return <Smartphone size={14} />;
-      case 'Charger': return <Zap size={14} />;
-      case 'Earphone': return <Headphones size={14} />;
-      default: return <Tag size={14} />;
+    } catch (error) {
+      toast.error(error.response?.data?.message || "Update failed");
     }
   };
 
   const removeProduct = async (productId) => {
+    if (!window.confirm("Bạn có chắc muốn xoá sản phẩm này không?")) return;
     try {
-      const confirmDelete = window.confirm("Bạn có chắc muốn xoá sản phẩm này không?");
-      if (!confirmDelete) return;
       const data = await axiosInstance.delete(`/product/${productId}`);
       if (data.success) {
-        toast.success("Delete product successfully")
-        console.log(data);
+        toast.success("Delete product successfully");
         fetchList();
       }
     } catch (error) {
-      toast.error(error.response?.data?.message || "Update failed");
+      toast.error(error.response?.data?.message || "Delete failed");
     }
-  }
+  };
 
-  useEffect(() => { fetchList(); }, []);
+  const getCategoryIcon = (cat) => {
+    switch (cat) {
+      case "Women": return <User size={14} />;
+      case "Men": return <Users size={14} />;
+      case "Kids": return <Baby size={14} />;
+      default: return <Tag size={14} />;
+    }
+  };
 
   return (
     <div className="p-4 md:p-8 bg-slate-50 min-h-screen font-sans">
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-black text-slate-800 tracking-tight">Product Manager</h1>
-          <p className="text-slate-500">Showing {filteredAndSortedList.length} of {list.length} items</p>
+          <p className="text-slate-500">Showing {list.length} of {total} items</p>
         </div>
-
-        {/* TOOLBAR: Search & Filters */}
         <div className="flex flex-wrap items-center gap-3">
-          <div className="relative group">
+          <form onSubmit={handleSearchSubmit} className="relative group flex">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-indigo-500 transition-colors" size={18} />
             <input
               type="text"
-              placeholder="Search name, brand..."
+              placeholder="Search name... (Enter)"
               className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 w-full md:w-64 shadow-sm transition-all"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
             />
-          </div>
-
+          </form>
           <select
             className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm font-semibold text-slate-600"
             value={filterCategory}
             onChange={(e) => setFilterCategory(e.target.value)}
           >
-            <option value="All">All Categories</option>
+            <option value="">All Categories</option>
             {categories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
           </select>
-
           <select
             className="px-4 py-2.5 bg-white border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-indigo-500 shadow-sm font-semibold text-slate-600"
             value={filterSubcategory}
             onChange={(e) => setFilterSubcategory(e.target.value)}
           >
-            <option value="All">All Subcategories</option>
+            <option value="">All Subcategories</option>
             {subCategories.map(cat => <option key={cat} value={cat}>{cat}</option>)}
           </select>
         </div>
       </div>
 
-      {/* Table Section */}
       <div className="bg-white rounded-3xl shadow-sm border border-slate-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-slate-50/50 border-b border-slate-200">
-                <th className="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors" onClick={() => requestSort('name')}>
-                  <div className="flex items-center gap-1">Product <ArrowUpDown size={12} /></div>
-                </th>
-                <th className="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors" onClick={() => requestSort('subCategory')}>
-                  <div className="flex items-center gap-1">Brand <ArrowUpDown size={12} /></div>
-                </th>
+                <th className="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Product</th>
+                <th className="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Brand</th>
                 <th className="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest">Category</th>
-                <th className="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors" onClick={() => requestSort('price')}>
-                  <div className="flex items-center gap-1">Price <ArrowUpDown size={12} /></div>
+                <th
+                  className="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest cursor-pointer hover:text-indigo-600 transition-colors"
+                  onClick={requestSort}
+                >
+                  <div className="flex items-center gap-1">
+                    Price <ArrowUpDown size={12} />
+                    {sortConfig && <span className="text-indigo-500 text-base">{sortConfig === "low-high" ? "↑" : "↓"}</span>}
+                  </div>
                 </th>
                 <th className="px-6 py-5 text-xs font-bold text-slate-400 uppercase tracking-widest text-center">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {filteredAndSortedList.map((item) => (
+              {list.map((item) => (
                 <tr key={item._id} className="hover:bg-indigo-50/30 transition-all group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-4">
                       <img className="w-12 h-12 object-contain bg-slate-50 rounded-lg p-1 border" src={item.image[0]} alt="" />
                       <div>
                         <p className="font-bold text-slate-800 line-clamp-1">{item.name}</p>
-                        {item.bestseller && <span className="text-[10px] font-bold text-orange-500 flex items-center gap-1"><CheckCircle2 size={10} /> BESTSELLER</span>}
+                        {item.bestseller && (
+                          <span className="text-[10px] font-bold text-orange-500 flex items-center gap-1">
+                            <CheckCircle2 size={10} /> BESTSELLER
+                          </span>
+                        )}
                       </div>
                     </div>
                   </td>
@@ -221,18 +210,58 @@ const List = () => {
               ))}
             </tbody>
           </table>
-          {filteredAndSortedList.length === 0 && (
+          {list.length === 0 && (
             <div className="py-20 text-center text-slate-400 font-medium">No products found matching your criteria.</div>
           )}
         </div>
+
+        {totalPages > 1 && (
+          <div className="flex items-center justify-between px-6 py-4 border-t border-slate-100">
+            <p className="text-sm text-slate-500">Page {page} of {totalPages}</p>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                disabled={page === 1}
+                className="p-2 rounded-xl border border-slate-200 hover:border-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => p === 1 || p === totalPages || Math.abs(p - page) <= 1)
+                .reduce((acc, p, idx, arr) => {
+                  if (idx > 0 && p - arr[idx - 1] > 1) acc.push("...");
+                  acc.push(p);
+                  return acc;
+                }, [])
+                .map((p, idx) =>
+                  p === "..." ? (
+                    <span key={`e-${idx}`} className="px-2 text-slate-400">...</span>
+                  ) : (
+                    <button
+                      key={p}
+                      onClick={() => setPage(p)}
+                      className={`w-9 h-9 rounded-xl text-sm font-bold transition-all ${page === p ? "bg-indigo-600 text-white shadow" : "border border-slate-200 hover:border-indigo-400 text-slate-600"}`}
+                    >
+                      {p}
+                    </button>
+                  )
+                )}
+              <button
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                disabled={page === totalPages}
+                className="p-2 rounded-xl border border-slate-200 hover:border-indigo-400 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* -------- EDIT MODAL -------- */}
-      {/* ... Giữ nguyên phần Modal của bạn vì nó đã đẹp sẵn rồi ... */}
       {isEditModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => setIsEditModalOpen(false)}></div>
-          <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl p-0 overflow-hidden animate-in zoom-in duration-200">
+          <div className="relative bg-white w-full max-w-lg rounded-[2.5rem] shadow-2xl overflow-hidden animate-in zoom-in duration-200">
             <div className="px-10 py-8 bg-indigo-600 text-white flex justify-between items-center">
               <h2 className="text-2xl font-black italic tracking-tight uppercase">Edit Item</h2>
               <X className="cursor-pointer hover:rotate-90 transition-transform" onClick={() => setIsEditModalOpen(false)} />

@@ -10,13 +10,16 @@ const productSchema = new mongoose.Schema({
   sizes: { type: Array, required: true },
   bestseller: { type: Boolean },
   quantity: { type: Number, required: true, default: 0 },
-  promotionIds: [
-    {
-      type: String
-    }
-  ],
+  promotionIds: [{ type: String }],
   date: { type: Number, required: true }
 })
+
+productSchema.index({ category: 1 })
+productSchema.index({ subCategory: 1 })
+productSchema.index({ category: 1, subCategory: 1 })
+productSchema.index({ name: 'text' })
+productSchema.index({ date: -1 })
+productSchema.index({ price: 1 })
 
 const productModel = mongoose.models.product || mongoose.model("product", productSchema)
 

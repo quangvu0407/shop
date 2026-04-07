@@ -1,5 +1,6 @@
 import { v2 as cloudinary } from "cloudinary";
 import productModel from "../models/productModel.js";
+import redis from '../config/redis.js'
 
 // Add product
 const createProduct = async (data, files) => {
@@ -46,12 +47,44 @@ const createProduct = async (data, files) => {
   };
 
   const product = new productModel(productData);
-  return await product.save();
+  const saved = await product.save();
+  invalidateProductCache();
+  return saved;
 };
+
+const CACHE_TTL = 300 // 5 phút
+
+const invalidateProductCache = async () => {
+  try {
+    const keys = await redis.keys('products:*')
+    if (keys.length) await redis.del(keys)
+  } catch (e) {
+    console.error('Redis invalidate error:', e)
+  }
+}
 
 // Get all
 const getAllProducts = async () => {
-  return await productModel.find({});
+  const cacheKey = "products:all";
+  try {
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      console.log("Cache hit");
+      return JSON.parse(cached);
+    }
+  } catch (e) {
+    console.error('Redis get error:', e)
+  }
+
+  const products = await productModel.find({}).lean();
+
+  try {
+    await redis.set(cacheKey, JSON.stringify(products), "EX", CACHE_TTL);
+  } catch (e) {
+    console.error('Redis set error:', e)
+  }
+
+  return products
 };
 
 // Get product for chatbot
@@ -60,56 +93,98 @@ const getProductContext = async () => {
   return await productModel.find({}).select("_id name price category subCategory sizes quantity bestseller").limit(50);
 };
 
-const ProductPage = async ({ page = 1, limit = 15, category }) => {
+const ProductPage = async ({ page = 1, limit = 15, category, subCategory, search, sort }) => {
+  page = Number(page) || 1;
+  limit = Math.min(Number(limit) || 15, 50);
   const skip = (page - 1) * limit;
+  const cacheKey = `products:${page}:${limit}:${category || "all"}:${subCategory || "all"}:${search || ""}:${sort || "default"}`;
+  // 1. check cache
+  try {
+    const cached = await redis.get(cacheKey);
+    if (cached) {
+      console.log("Cache hit:", cacheKey);
+      return JSON.parse(cached);
+    }
+  } catch (e) {
+    console.error('Redis get error:', e)
+  }
 
   const filter = {};
-  if (category) filter.category = category;
+  if (category) filter.category = { $in: Array.isArray(category) ? category : category.split(',') };
+  if (subCategory) filter.subCategory = { $in: Array.isArray(subCategory) ? subCategory : subCategory.split(',') };
+  if (search) filter.name = { $regex: search, $options: 'i' };
 
-  const products = await productModel.find(filter)
-    .skip(skip)
-    .limit(limit);
+  const sortOption = sort === 'low-high' ? { price: 1 } : sort === 'high-low' ? { price: -1 } : { date: -1 };
 
-  const total = await productModel.countDocuments(filter);
+  const [products, total] = await Promise.all([
+    productModel.find(filter).sort(sortOption).skip(skip).limit(limit),
+    productModel.countDocuments(filter),
+  ]);
 
-  return {
+  const result = {
     page,
     limit,
     total,
     totalPages: Math.ceil(total / limit),
     data: products,
   };
+
+  // 4. set cache
+  try {
+    await redis.set(cacheKey, JSON.stringify(result), "EX", CACHE_TTL);
+  } catch (e) {
+    console.error('Redis set error:', e)
+  }
+
+  return result;
 };
 
 // Delete
 const deleteProduct = async (id) => {
-  return await productModel.findByIdAndDelete(id);
+  const result = await productModel.findByIdAndDelete(id);
+  try {
+    await redis.del(`product:${id}`)
+    await invalidateProductCache()
+  } catch (e) {
+    console.error('Redis del error:', e)
+  }
+  return result;
 };
 
 // Get one
 const getProductById = async (id) => {
-  return await productModel.findById(id);
-};
+  const cacheKey = `product:${id}`
+
+  try {
+    const cached = await redis.get(cacheKey)
+    if (cached) return JSON.parse(cached)
+  } catch (e) {
+    console.error('Redis get error:', e)
+  }
+
+  const product = await productModel.findById(id)
+  if (!product) throw new Error('Product not found')
+
+  try {
+    await redis.set(cacheKey, JSON.stringify(product), 'EX', CACHE_TTL)
+  } catch (e) {
+    console.error('Redis set error:', e)
+  }
+
+  return product
+}
+
 
 // Update
 const updateProductById = async (id, data) => {
   const { name, description, price, category, subCategory, bestseller, sizes, quantity, promotionIds } = data;
 
+  await redis.del(`product:${id}`)
   return await productModel.findByIdAndUpdate(
     id,
-    {
-      name,
-      description,
-      price,
-      category,
-      subCategory,
-      bestseller,
-      quantity,
-      promotionIds,
-      sizes
-    },
+    { name, description, price, category, subCategory, bestseller, quantity, promotionIds, sizes },
     { new: true }
-  );
+  ).then(result => { invalidateProductCache(); return result; });
 };
 
 const decreaseProductsStock = async (items = []) => {
@@ -153,6 +228,13 @@ const decreaseProductsStock = async (items = []) => {
     }))
   );
 
+  try {
+    await Promise.all(productIds.map(id => redis.del(`product:${id}`)))
+    await invalidateProductCache()
+  } catch (e) {
+    console.error('Redis invalidate stock error:', e)
+  }
+
   return productIds;
 };
 
@@ -178,13 +260,24 @@ const restoreProductsStock = async (items = []) => {
     }))
   );
 
+  try {
+    await Promise.all(productIds.map(id => redis.del(`product:${id}`)))
+    await invalidateProductCache()
+  } catch (e) {
+    console.error('Redis invalidate stock error:', e)
+  }
+
   return productIds;
 };
 
 const getProductCount = async () => {
   const count = await productModel.countDocuments();
   return count;
-}
+};
+
+const getProductsByIds = async (ids = []) => {
+  return await productModel.find({ _id: { $in: ids } });
+};
 
 export {
   createProduct,
@@ -195,5 +288,7 @@ export {
   ProductPage,
   decreaseProductsStock,
   restoreProductsStock,
-  getProductCount, getProductContext
+  getProductCount,
+  getProductContext,
+  getProductsByIds,
 };

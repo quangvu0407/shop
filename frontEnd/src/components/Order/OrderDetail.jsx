@@ -51,10 +51,10 @@ const OrderDetail = ({ data, setOpen, setData }) => {
 
             <div className="border-b border-gray-50 pb-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                Giá tiền
+                Giá sản phẩm
               </label>
-              <p className="text-stone-900 font-bold text-lg">
-                {data.price?.toLocaleString("vi-VN")}đ
+              <p className="text-stone-700 font-medium">
+                {data.price?.toLocaleString("vi-VN")}đ × {data.quantity}
               </p>
             </div>
 
@@ -66,6 +66,17 @@ const OrderDetail = ({ data, setOpen, setData }) => {
                 Size: {data.size} — SL: {data.quantity}
               </p>
             </div>
+
+            {data.orderAmount != null && (
+              <div className="border-b border-gray-50 pb-2">
+                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                  Tổng đơn hàng (gồm ship & khuyến mãi)
+                </label>
+                <p className="text-stone-900 font-bold text-lg">
+                  {data.orderAmount?.toLocaleString("vi-VN")}đ
+                </p>
+              </div>
+            )}
 
             <div className="border-b border-gray-50 pb-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">

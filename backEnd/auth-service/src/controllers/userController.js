@@ -79,19 +79,20 @@ const changePassword = async (req, res) => {
 const countUser = async (req, res) => {
   try {
     const count = await userService.getUsercount();
-    res.json({
-      success: true,
-      count
-    });
+    res.json({ success: true, count });
   } catch (error) {
-    console.error("User count error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to get user count"
-    });
+    res.status(500).json({ success: false, message: "Failed to get user count" });
   }
-}
+};
+
+const listUsers = async (req, res) => {
+  try {
+    const users = await userService.listUsersService();
+    res.json({ success: true, users });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 const refreshToken = async (req, res) => {
   try {
@@ -112,4 +113,4 @@ const logoutUser = async (req, res) => {
   }
 };
 
-export { loginUser, registerUser, adminLogin, getUserProfile, updateUserName, changePassword, countUser, refreshToken, logoutUser, facebookCallback };
+export { loginUser, registerUser, adminLogin, getUserProfile, updateUserName, changePassword, countUser, listUsers, refreshToken, logoutUser, facebookCallback };

@@ -16,7 +16,7 @@ import {
 export const placeOrder = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { items, amount, address } = req.body;
+    const { items, amount, address, promoIds } = req.body;
 
     await createOrderCOD({
       userId,
@@ -24,6 +24,7 @@ export const placeOrder = async (req, res) => {
       amount,
       address,
       authHeader: req.headers.authorization,
+      promoIds,
     });
 
     res.json({ success: true, message: "Order Placed" });

@@ -1,62 +1,75 @@
-import cartModel from "../models/cartModel.js";
+import redis from "../config/redis.js";
 
-// 1. Logic thêm vào giỏ
-export const addToCartService = async (userId, { itemId, size }) => {
-    let cart = await cartModel.findOne({ userId });
+const CART_TTL = 60 * 60 * 24 * 7; // 7 ngày
 
-    // Nếu chưa có giỏ hàng, tạo mới
-    if (!cart) {
-        cart = new cartModel({
-            userId,
-            items: [{ productId: itemId, size, quantity: 1 }]
-        });
-    } else {
-        // Tìm xem sản phẩm cùng size đã có trong giỏ chưa
-        const itemIndex = cart.items.findIndex(
-            (item) => item.productId.toString() === itemId && item.size === size
-        );
+const getCartKey = (userId) => `cart:${userId}`;
 
-        if (itemIndex > -1) {
-            cart.items[itemIndex].quantity += 1; // Có rồi thì cộng 1
-        } else {
-            cart.items.push({ productId: itemId, size, quantity: 1 }); // Chưa có thì push mới
-        }
-    }   
-    return await cart.save();
-};
-
-// 2. Logic cập nhật số lượng (hoặc xóa)
-export const updateCartService = async (userId, { itemId, size, quantity }) => {
-    let cart = await cartModel.findOne({ userId });
-    if (!cart) throw new Error("Cart not found");
-
-    const itemIndex = cart.items.findIndex(
-        (item) => item.productId.toString() === itemId && item.size === size
-    );
-
-    if (itemIndex > -1) {
-        if (quantity > 0) {
-            cart.items[itemIndex].quantity = quantity;
-        } else {
-            // Nếu quantity = 0 thì xóa dòng đó luôn
-            cart.items.splice(itemIndex, 1);
-        }
-        return await cart.save();
-    } else {
-        throw new Error("Item not found in cart");
+const getCart = async (userId) => {
+    try {
+        const data = await redis.get(getCartKey(userId));
+        return data ? JSON.parse(data) : [];
+    } catch (e) {
+        console.error("Redis get cart error:", e);
+        return [];
     }
 };
 
-// 3. Logic lấy giỏ hàng
-export const getUserCartService = async (userId) => {
-    // cart-service does not own the product model, so avoid populate here.
-    const cart = await cartModel.findOne({ userId });
-    return cart ? cart.items : [];
+const saveCart = async (userId, items) => {
+    try {
+        await redis.set(getCartKey(userId), JSON.stringify(items), "EX", CART_TTL);
+    } catch (e) {
+        console.error("Redis set cart error:", e);
+    }
 };
 
+// 1. Thêm vào giỏ
+export const addToCartService = async (userId, { itemId, size }) => {
+    const items = await getCart(userId);
+
+    const idx = items.findIndex(
+        (item) => item.productId === itemId && item.size === size
+    );
+
+    if (idx > -1) {
+        items[idx].quantity += 1;
+    } else {
+        items.push({ productId: itemId, size, quantity: 1 });
+    }
+
+    await saveCart(userId, items);
+    return items;
+};
+
+// 2. Cập nhật số lượng (quantity = 0 thì xóa)
+export const updateCartService = async (userId, { itemId, size, quantity }) => {
+    const items = await getCart(userId);
+
+    const idx = items.findIndex(
+        (item) => item.productId === itemId && item.size === size
+    );
+
+    if (idx === -1) throw new Error("Item not found in cart");
+
+    if (quantity > 0) {
+        items[idx].quantity = quantity;
+    } else {
+        items.splice(idx, 1);
+    }
+
+    await saveCart(userId, items);
+    return items;
+};
+
+// 3. Lấy giỏ hàng
+export const getUserCartService = async (userId) => {
+    return await getCart(userId);
+};
+
+// 4. Xóa toàn bộ giỏ
 export const clearUserCartService = async (userId) => {
-    const cart = await cartModel.findOne({ userId });
-    if (!cart) return null;
-    cart.items = [];
-    return await cart.save();
+    try {
+        await redis.del(getCartKey(userId));
+    } catch (e) {
+        console.error("Redis del cart error:", e);
+    }
 };

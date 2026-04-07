@@ -4,6 +4,7 @@ import Sidebar from './components/Sidebar'
 import Add from "./pages/Add";
 import List from "./pages/List";
 import Order from "./pages/Order";
+import Promotion from "./pages/Promotion";
 import Login from './components/Login';
 import { Routes, Route } from "react-router-dom";
 import Home from './pages/Home';
@@ -40,6 +41,7 @@ const App = () => {
                   <Route path="/add" element={<Add />} />
                   <Route path="/list" element={<List />} />
                   <Route path="/order" element={<Order token={token} />} />
+                  <Route path="/promotion" element={<Promotion />} />
                 </Routes>
               </div>
             </div>

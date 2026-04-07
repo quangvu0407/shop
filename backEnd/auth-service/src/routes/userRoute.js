@@ -1,5 +1,5 @@
 import express from "express";
-import { loginUser, registerUser, adminLogin, getUserProfile, updateUserName, changePassword, countUser, refreshToken, logoutUser, facebookCallback } from "../controllers/userController.js";
+import { loginUser, registerUser, adminLogin, getUserProfile, updateUserName, changePassword, countUser, listUsers, refreshToken, logoutUser, facebookCallback } from "../controllers/userController.js";
 import authUser from "../middleware/auth.js";
 import adminAuth from "../middleware/adminAuth.js";
 import passport from "../config/passport.js";
@@ -26,5 +26,6 @@ userRouter.post('/change-password', authUser, changePassword);
 
 //data dashboard
 userRouter.get("/count", adminAuth, countUser);
+userRouter.get("/list", adminAuth, listUsers);
 
 export default userRouter;

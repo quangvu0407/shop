@@ -2,6 +2,7 @@ import axios from "axios";
 
 const productBase = process.env.PRODUCT_SERVICE_URL || "http://localhost:3002";
 const cartBase = process.env.CART_SERVICE_URL || "http://localhost:3004";
+const promotionBase = process.env.PROMOTION_SERVICE_URL || "http://localhost:3007";
 
 function rethrowWithMessage(err, fallback) {
   const msg = err.response?.data?.message || (err instanceof Error ? err.message : null) || fallback;
@@ -47,5 +48,16 @@ export async function clearCartRemote(authHeader) {
     }
   } catch (err) {
     rethrowWithMessage(err, "Clear cart failed");
+  }
+}
+
+export async function confirmPromoUsage(promoIds, userId) {
+  if (!promoIds || promoIds.length === 0) return;
+  for (const promoId of promoIds) {
+    try {
+      await axios.post(`${promotionBase}/confirm-usage`, { promoId, userId: String(userId) });
+    } catch (err) {
+      console.error("[confirmPromoUsage] failed for", promoId, err.message);
+    }
   }
 }

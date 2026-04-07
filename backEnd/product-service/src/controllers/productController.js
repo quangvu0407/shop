@@ -8,7 +8,8 @@ import {
   decreaseProductsStock,
   restoreProductsStock,
   getProductCount,
-  getProductContext
+  getProductContext,
+  getProductsByIds,
 } from "../services/productService.js";
 
 // Thêm
@@ -34,7 +35,7 @@ const listProducts = async (req, res) => {
 const productContext = async (req, res) => {
   try {
     const products = await getProductContext();
-    res.json({success: true, products})
+    res.json({ success: true, products })
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });
   }
@@ -44,9 +45,9 @@ export const getProducts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 15;
-    const category = req.query.category;
+    const { category, subCategory, search, sort } = req.query;
 
-    const result = await ProductPage({ page, limit, category });
+    const result = await ProductPage({ page, limit, category, subCategory, search, sort });
 
     res.json({ success: true, ...result });
   } catch (err) {
@@ -124,20 +125,23 @@ const restoreStock = async (req, res) => {
 const count = async (req, res) => {
   try {
     const productCount = await getProductCount();
-
-    res.json({
-      success: true,
-      productCount
-    });
+    res.json({ success: true, productCount });
   } catch (error) {
-    console.error("Product count error:", error);
-
-    res.status(500).json({
-      success: false,
-      message: "Failed to get product count"
-    });
+    res.status(500).json({ success: false, message: "Failed to get product count" });
   }
-}
+};
+
+const batchProducts = async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids) || ids.length === 0)
+      return res.json({ success: true, products: [] });
+    const products = await getProductsByIds(ids);
+    res.json({ success: true, products });
+  } catch (error) {
+    res.status(500).json({ success: false, message: error.message });
+  }
+};
 
 export {
   addProduct,
@@ -148,5 +152,6 @@ export {
   decreaseStock,
   restoreStock,
   count,
-  productContext
+  productContext,
+  batchProducts,
 };

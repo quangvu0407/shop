@@ -13,6 +13,7 @@ const SERVICES = {
   cart: process.env.CART_URL || "http://localhost:3004",
   chat: process.env.CHAT_URL || "http://localhost:3005",
   comment: process.env.COMMENT_URL || "http://localhost:3006",
+  promotion: process.env.PROMOTION_URL || "http://localhost:3007",
 };
 
 const proxy = (target, prefix) => createProxyMiddleware({
@@ -38,6 +39,7 @@ app.use("/api/order", proxy(SERVICES.order, "/api/order"));
 app.use("/api/cart", proxy(SERVICES.cart, "/api/cart"));
 app.use("/api/chat", proxy(SERVICES.chat, "/api/chat"));
 app.use("/api/comment", proxy(SERVICES.comment, "/api/comment"));
+app.use("/api/promotion", proxy(SERVICES.promotion, "/api/promotion"));
 
 app.listen(3000, () => {
   console.log("API Gateway running on port 3000");

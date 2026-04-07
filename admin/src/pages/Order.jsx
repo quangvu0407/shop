@@ -120,12 +120,15 @@ const Orders = ({ token }) => {
                 <option value="Delivered">Delivered</option>
                 <option value="Cancelled">Cancelled</option>
               </select>
-              <button
-                onClick={() => deleteHandler(order._id)}
-                className="p-2 text-xs font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-colors rounded"
-              >
-                Xóa đơn
-              </button>
+              {(order.status === "Order Placed" || order.status === "Cancelled") && (
+                <button
+                  onClick={() => deleteHandler(order._id)}
+                  className="p-2 text-xs font-semibold text-red-600 border border-red-200 hover:bg-red-50 transition-colors rounded"
+                >
+                  Xóa đơn
+                </button>
+              )}
+
             </div>
           </div>
         ))}

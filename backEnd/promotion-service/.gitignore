@@ -1,0 +1,30 @@
+# dependencies
+node_modules/
+
+# env files
+.env
+.env.*
+
+# logs
+logs/
+*.log
+npm-debug.log*
+
+# build
+dist/
+build/
+
+# uploads
+uploads/
+tmp/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+seedImages/
+test.js
