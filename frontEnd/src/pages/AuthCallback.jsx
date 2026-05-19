@@ -14,7 +14,7 @@ const AuthCallback = () => {
     const error = searchParams.get("error");
 
     if (error) {
-      toast.error("Đăng nhập Facebook thất bại");
+      toast.error("Facebook login failed");
       navigate("/login");
       return;
     }
@@ -23,7 +23,7 @@ const AuthCallback = () => {
       localStorage.setItem("token", access_token);
       if (refresh_token) localStorage.setItem("refresh_token", refresh_token);
       setToken(access_token);
-      toast.success("Đăng nhập Facebook thành công");
+      toast.success("Facebook login successful");
       navigate("/");
     } else {
       navigate("/login");
@@ -32,7 +32,7 @@ const AuthCallback = () => {
 
   return (
     <div className="min-h-[60vh] flex items-center justify-center">
-      <p className="text-stone-500">Đang xử lý đăng nhập...</p>
+      <p className="text-stone-500">Processing login...</p>
     </div>
   );
 };

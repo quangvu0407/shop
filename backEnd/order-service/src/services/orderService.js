@@ -205,6 +205,55 @@ export const getRecentOrders = async () => {
   return orders;
 };
 
+// Webhook handler - xử lý khi Stripe gọi về server (không phụ thuộc vào client)
+export const handleStripeWebhook = async (rawBody, signature) => {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+  let event;
+
+  try {
+    event = stripe.webhooks.constructEvent(rawBody, signature, process.env.STRIPE_WEBHOOK_SECRET);
+  } catch (err) {
+    throw new Error(`Webhook signature invalid: ${err.message}`);
+  }
+
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object;
+    // Lấy orderId từ success_url
+    const match = session.success_url?.match(/orderId=([a-f0-9]{24})/i);
+    if (!match) return;
+
+    const orderId = match[1];
+
+    const order = await orderModel.findOneAndUpdate(
+      { _id: orderId, payment: false, paymentMethod: 'Stripe' },
+      { $set: { payment: true } },
+      { new: true }
+    );
+
+    if (!order) return; // Đã được verify trước đó, bỏ qua
+
+    try {
+      await decreaseStockRemote(order.items);
+    } catch (err) {
+      await orderModel.findByIdAndUpdate(orderId, { payment: false });
+      throw err;
+    }
+  }
+};
+
+// Cleanup job: xóa các order Stripe bị treo quá 1 giờ (chưa thanh toán)
+export const cleanupPendingStripeOrders = async () => {
+  const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000);
+  const result = await orderModel.deleteMany({
+    payment: false,
+    paymentMethod: 'Stripe',
+    date: { $lt: oneHourAgo }
+  });
+  if (result.deletedCount > 0) {
+    console.log(`Cleaned up ${result.deletedCount} pending Stripe orders`);
+  }
+};
+
 export const cancelUserOrder = async ({ orderId, userId }) => {
   const order = await orderModel.findOne({
     _id: orderId,

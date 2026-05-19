@@ -86,18 +86,18 @@ const ProductDetail = ({ productId }) => {
   const submitReview = async (e) => {
     e.preventDefault();
     if (!token) {
-      toast.info("Vui lòng đăng nhập để bình luận");
+      toast.info("Please login to comment");
       navigate("/login");
       return;
     }
     const text = reviewText.trim();
     if (!text) {
-      toast.error("Nhập nội dung bình luận");
+      toast.error("Enter comment content");
       return;
     }
     const r = Math.round(Number(reviewRate));
     if (Number.isNaN(r) || r < 0 || r > 5) {
-      toast.error("Đánh giá từ 0 đến 5 sao");
+      toast.error("Rating from 0 to 5 stars");
       return;
     }
     setSubmittingReview(true);
@@ -108,15 +108,15 @@ const ProductDetail = ({ productId }) => {
         rate: r,
       });
       if (res.success) {
-        toast.success(res.message || "Đã gửi bình luận");
+        toast.success(res.message || "Comment submitted");
         setReviewText("");
         setReviewRate(5);
         fetchComments();
       } else {
-        toast.error(res.message || "Gửi bình luận thất bại");
+        toast.error(res.message || "Failed to submit comment");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || error.message || "Gửi bình luận thất bại");
+      toast.error(error?.response?.data?.message || error.message || "Failed to submit comment");
     } finally {
       setSubmittingReview(false);
     }
@@ -202,7 +202,7 @@ const ProductDetail = ({ productId }) => {
               : 'border border-black text-gray-500'
               }`}
           >
-            Đánh giá ({comments.length})
+            Reviews ({comments.length})
           </button>
         </div>
 
@@ -239,8 +239,8 @@ const ProductDetail = ({ productId }) => {
                         type="button"
                         onClick={() => setReviewRate(n)}
                         className={`min-w-9 px-2 py-1.5 text-sm rounded-lg border transition-colors ${reviewRate === n
-                            ? "border-orange-500 bg-orange-50 text-orange-700 font-medium"
-                            : "border-stone-200 bg-white text-stone-600 hover:border-stone-300"
+                          ? "border-orange-500 bg-orange-50 text-orange-700 font-medium"
+                          : "border-stone-200 bg-white text-stone-600 hover:border-stone-300"
                           }`}
                       >
                         {n}

@@ -17,29 +17,35 @@ const ShopContextProvider = (props) => {
   const navigate = useNavigate();
 
   const addToCart = async (itemId, size) => {
+    if (!token) {
+      toast.error("Please login to add items to cart!");
+      navigate("/login");
+      return;
+    }
+
     if (!size) {
       toast.error("Please Choose size of product!");
       return;
     }
 
-    // 1. Cập nhật Local State (để giao diện thay đổi ngay lập tức - Optimistic Update)
-    let cartData = [...cartItems]; // Giả sử cartItems lúc này là một Array
+    // 1. Update Local State (for immediate UI update - Optimistic Update)
+    let cartData = [...cartItems]; // Assuming cartItems is an Array
 
     const itemIndex = cartData.findIndex(
       (item) => item.productId === itemId && item.size === size
     );
 
     if (itemIndex > -1) {
-      // Nếu đã có trong mảng, tăng số lượng
+      // If already in array, increase quantity
       cartData[itemIndex].quantity += 1;
     } else {
-      // Nếu chưa có, thêm Object mới vào mảng
+      // If not present, add new Object to array
       cartData.push({ productId: itemId, size, quantity: 1 });
     }
 
     setCartItems(cartData);
 
-    // 2. Gửi dữ liệu lên Backend qua Axios
+    // 2. Send data to Backend via Axios
     if (token) {
       try {
         // Đảm bảo URL này khớp với route bạn đã đặt ở Backend

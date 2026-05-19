@@ -93,11 +93,11 @@ const getProductContext = async () => {
   return await productModel.find({}).select("_id name price category subCategory sizes quantity bestseller").limit(50);
 };
 
-const ProductPage = async ({ page = 1, limit = 15, category, subCategory, search, sort }) => {
+const ProductPage = async ({ page = 1, limit = 15, category, subCategory, search, sort, minPrice, maxPrice }) => {
   page = Number(page) || 1;
   limit = Math.min(Number(limit) || 15, 50);
   const skip = (page - 1) * limit;
-  const cacheKey = `products:${page}:${limit}:${category || "all"}:${subCategory || "all"}:${search || ""}:${sort || "default"}`;
+  const cacheKey = `products:${page}:${limit}:${category || "all"}:${subCategory || "all"}:${search || ""}:${sort || "default"}:${minPrice || ""}:${maxPrice || ""}`;
   // 1. check cache
   try {
     const cached = await redis.get(cacheKey);
@@ -112,7 +112,23 @@ const ProductPage = async ({ page = 1, limit = 15, category, subCategory, search
   const filter = {};
   if (category) filter.category = { $in: Array.isArray(category) ? category : category.split(',') };
   if (subCategory) filter.subCategory = { $in: Array.isArray(subCategory) ? subCategory : subCategory.split(',') };
-  if (search) filter.name = { $regex: search, $options: 'i' };
+  if (search) {
+    // Tách từ khóa và tìm kiếm linh hoạt - chỉ cần 1 từ match là được
+    const keywords = search.trim().split(/\s+/).filter(k => k.length > 0);
+    if (keywords.length === 1) {
+      filter.name = { $regex: keywords[0], $options: 'i' };
+    } else {
+      // Tìm sản phẩm có chứa BẤT KỲ từ nào trong danh sách
+      filter.$or = keywords.map(keyword => ({
+        name: { $regex: keyword, $options: 'i' }
+      }));
+    }
+  }
+  if (minPrice || maxPrice) {
+    filter.price = {};
+    if (minPrice) filter.price.$gte = Number(minPrice);
+    if (maxPrice) filter.price.$lte = Number(maxPrice);
+  }
 
   const sortOption = sort === 'low-high' ? { price: 1 } : sort === 'high-low' ? { price: -1 } : { date: -1 };
 

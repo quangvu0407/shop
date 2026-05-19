@@ -51,12 +51,12 @@ const Profile = () => {
         setUser(res.user);
         setFormData((prev) => ({ ...prev, newName: res.user.name || "" }));
       } else {
-        toast.error(res.message || "Không tải được hồ sơ");
+        toast.error(res.message || "Failed to load profile");
       }
     } catch (error) {
       console.error(error);
       toast.error(
-        error?.response?.data?.message || "Không tải được hồ sơ. Đăng nhập lại."
+        error?.response?.data?.message || "Failed to load profile. Please login again."
       );
       navigate("/login");
     } finally {
@@ -82,14 +82,14 @@ const Profile = () => {
         mode === "name" ? "/user/update-name" : "/user/change-password";
 
       if (mode === "password" && formData.newPassword !== formData.confirmPassword) {
-        toast.error("Mật khẩu xác nhận không khớp");
+        toast.error("Passwords do not match");
         return;
       }
 
       const res = await axiosInstance.post(endpoint, formData);
       if (res.success) {
         toast.success(
-          mode === "name" ? "Cập nhật tên thành công" : "Đổi mật khẩu thành công"
+          mode === "name" ? "Name updated successfully" : "Password changed successfully"
         );
         setIsModalOpen(false);
         setFormData((prev) => ({
@@ -100,10 +100,10 @@ const Profile = () => {
         }));
         getProfile();
       } else {
-        toast.error(res.message || "Cập nhật thất bại");
+        toast.error(res.message || "Update failed");
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Có lỗi xảy ra");
+      toast.error(error?.response?.data?.message || "An error occurred");
     }
   };
 
@@ -113,7 +113,7 @@ const Profile = () => {
     setToken("");
     setCartItems([]);
     navigate("/login");
-    toast.success("Đã đăng xuất");
+    toast.success("Logged out");
   };
 
   const initial = user?.name?.trim()?.charAt(0)?.toUpperCase() || "?";
@@ -123,7 +123,7 @@ const Profile = () => {
       <div className="min-h-[60vh] border-t flex items-center justify-center bg-stone-50/80">
         <div className="flex flex-col items-center gap-3 text-stone-500">
           <div className="h-9 w-9 rounded-full border-2 border-stone-300 border-t-stone-800 animate-spin" />
-          <p className="text-sm">Đang tải hồ sơ…</p>
+          <p className="text-sm">Loading profile…</p>
         </div>
       </div>
     );
@@ -133,9 +133,9 @@ const Profile = () => {
     <div className="border-t bg-gradient-to-b from-stone-50 via-white to-stone-50/50 min-h-[calc(100vh-8rem)] py-10 sm:py-14 px-4">
       <div className="max-w-xl mx-auto">
         <div className="mb-8 text-center sm:text-left">
-          <Title text1="TÀI KHOẢN" text2="CỦA BẠN" />
+          <Title text1="YOUR" text2="ACCOUNT" />
           <p className="text-stone-500 text-sm mt-1 max-w-md">
-            Quản lý thông tin cá nhân và bảo mật đăng nhập.
+            Manage your personal information and login security.
           </p>
         </div>
 
@@ -150,7 +150,7 @@ const Profile = () => {
               </div>
               <div className="flex-1 min-w-0 pt-2 sm:pb-1">
                 <h1 className="text-xl sm:text-2xl font-medium text-stone-900 truncate">
-                  {user?.name || "Khách"}
+                  {user?.name || "Guest"}
                 </h1>
                 <p className="text-stone-500 text-sm truncate">{user?.email}</p>
               </div>
@@ -167,7 +167,7 @@ const Profile = () => {
                   strokeWidth={1.5}
                 />
                 <p className="text-[10px] font-semibold tracking-wider text-stone-400 uppercase">
-                  Giỏ hàng
+                  Cart
                 </p>
                 <p className="text-2xl font-semibold text-stone-800 tabular-nums">
                   {getCartCount()}
@@ -183,7 +183,7 @@ const Profile = () => {
                   strokeWidth={1.5}
                 />
                 <p className="text-[10px] font-semibold tracking-wider text-stone-400 uppercase">
-                  Đơn hàng
+                  Orders
                 </p>
                 <p className="text-2xl font-semibold text-stone-800 tabular-nums">
                   {orderCount}
@@ -195,7 +195,7 @@ const Profile = () => {
               <div className="flex items-center justify-between gap-4 rounded-xl border border-stone-200 px-4 py-3.5 bg-white">
                 <div className="min-w-0">
                   <p className="text-xs font-medium text-stone-400 uppercase tracking-wide">
-                    Họ tên
+                    Full Name
                   </p>
                   <p className="text-stone-900 font-medium truncate">{user?.name}</p>
                 </div>
@@ -207,7 +207,7 @@ const Profile = () => {
                   }}
                   className="text-sm font-medium text-stone-700 hover:text-stone-900 shrink-0 underline-offset-4 hover:underline"
                 >
-                  Sửa
+                  Edit
                 </button>
               </div>
 
@@ -228,7 +228,7 @@ const Profile = () => {
                 }}
                 className="flex-1 py-3.5 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors"
               >
-                Đổi mật khẩu
+                Change Password
               </button>
               <button
                 type="button"
@@ -236,7 +236,7 @@ const Profile = () => {
                 className="flex-1 py-3.5 rounded-xl border border-stone-300 text-stone-800 text-sm font-medium hover:bg-stone-50 transition-colors inline-flex items-center justify-center gap-2"
               >
                 <LogOut className="w-4 h-4" strokeWidth={1.5} />
-                Đăng xuất
+                Logout
               </button>
             </div>
           </div>
@@ -253,19 +253,19 @@ const Profile = () => {
           />
           <div className="relative bg-white w-full max-w-md rounded-2xl shadow-xl border border-stone-200 p-6 sm:p-8">
             <h2 className="text-lg font-semibold text-stone-900 text-center mb-1">
-              {mode === "name" ? "Cập nhật tên" : "Đổi mật khẩu"}
+              {mode === "name" ? "Update Name" : "Change Password"}
             </h2>
             <p className="text-center text-sm text-stone-500 mb-6">
               {mode === "name"
-                ? "Tên hiển thị trên đơn hàng và hồ sơ."
-                : "Nhập mật khẩu hiện tại và mật khẩu mới (tối thiểu 8 ký tự)."}
+                ? "Display name on orders and profile."
+                : "Enter current password and new password (minimum 8 characters)."}
             </p>
 
             <form onSubmit={handleSubmit} className="space-y-4">
               {mode === "name" ? (
                 <div>
                   <label className="text-xs font-medium text-stone-500 uppercase tracking-wide">
-                    Tên mới
+                    New Name
                   </label>
                   <input
                     type="text"
@@ -282,7 +282,7 @@ const Profile = () => {
                   <div className="relative">
                     <input
                       type={showPassword.old ? "text" : "password"}
-                      placeholder="Mật khẩu hiện tại"
+                      placeholder="Current Password"
                       required
                       className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 pr-12 focus:outline-none focus:ring-2 focus:ring-stone-800/20"
                       value={formData.oldPassword}
@@ -301,7 +301,7 @@ const Profile = () => {
                   <div className="relative">
                     <input
                       type={showPassword.new ? "text" : "password"}
-                      placeholder="Mật khẩu mới"
+                      placeholder="New Password"
                       required
                       className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 pr-12 focus:outline-none focus:ring-2 focus:ring-stone-800/20"
                       value={formData.newPassword}
@@ -320,7 +320,7 @@ const Profile = () => {
                   <div className="relative">
                     <input
                       type={showPassword.confirm ? "text" : "password"}
-                      placeholder="Xác nhận mật khẩu mới"
+                      placeholder="Confirm New Password"
                       required
                       className="w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 pr-12 focus:outline-none focus:ring-2 focus:ring-stone-800/20"
                       value={formData.confirmPassword}
@@ -352,13 +352,13 @@ const Profile = () => {
                   onClick={() => setIsModalOpen(false)}
                   className="flex-1 py-3 rounded-xl font-medium text-stone-600 bg-stone-100 hover:bg-stone-200 transition-colors"
                 >
-                  Hủy
+                  Cancel
                 </button>
                 <button
                   type="submit"
                   className="flex-1 py-3 rounded-xl font-medium text-white bg-stone-900 hover:bg-stone-800 transition-colors"
                 >
-                  Lưu
+                  Save
                 </button>
               </div>
             </form>

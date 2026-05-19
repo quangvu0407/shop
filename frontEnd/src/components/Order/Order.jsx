@@ -16,33 +16,39 @@ const Order = () => {
         setOrders([...response.orders].reverse());
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Không tải được đơn hàng");
+      toast.error(error?.response?.data?.message || "Failed to load orders");
     }
   };
 
   const handleCancelOrder = async (orderId) => {
-    if (!window.confirm("Bạn có chắc muốn hủy đơn hàng này?")) return;
+    if (!window.confirm("Are you sure you want to cancel this order?")) return;
     try {
       const response = await axiosInstance.post("/order/cancel", { orderId });
-      if (response.success) { toast.success("Đã hủy đơn hàng"); loadOrders(); }
-      else toast.error(response.message || "Hủy đơn thất bại");
+      if (response.success) { toast.success("Order cancelled"); loadOrders(); }
+      else toast.error(response.message || "Cancellation failed");
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Hủy đơn thất bại");
+      toast.error(error?.response?.data?.message || "Cancellation failed");
     }
   };
 
   const handleDeleteOrder = async (orderId) => {
-    if (!window.confirm("Xóa đơn hàng đã hủy này?")) return;
+    if (!window.confirm("Delete this cancelled order?")) return;
     try {
       const response = await axiosInstance.post("/order/delete-cancelled", { orderId });
-      if (response.success) { toast.success("Đã xóa đơn hàng"); loadOrders(); }
-      else toast.error(response.message || "Xóa thất bại");
+      if (response.success) { toast.success("Order deleted"); loadOrders(); }
+      else toast.error(response.message || "Deletion failed");
     } catch (error) {
-      toast.error(error?.response?.data?.message || "Xóa thất bại");
+      toast.error(error?.response?.data?.message || "Deletion failed");
     }
   };
 
-  useEffect(() => { loadOrders(); }, [token]);
+  useEffect(() => {
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    loadOrders();
+  }, [token]);
 
   const statusColor = (status) => {
     if (status === "Cancelled") return "bg-red-400";
@@ -53,20 +59,20 @@ const Order = () => {
   return (
     <div className="border-t pt-10 sm:pt-14 pb-16 min-h-[50vh] bg-gradient-to-b from-stone-50/60 to-white">
       <div className="mb-8">
-        <Title text1="ĐƠN" text2="HÀNG" />
-        <p className="text-stone-500 text-sm mt-1">Theo dõi trạng thái và chi tiết đơn hàng của bạn.</p>
+        <Title text1="YOUR" text2="ORDERS" />
+        <p className="text-stone-500 text-sm mt-1">Track the status and details of your orders.</p>
       </div>
 
       {orders.length === 0 ? (
         <div className="rounded-2xl border border-stone-200 bg-white p-12 text-center shadow-sm">
-          <p className="text-stone-600 font-medium">Chưa có đơn hàng</p>
-          <p className="text-stone-500 text-sm mt-2 mb-6">Đơn của bạn sẽ hiển thị tại đây sau khi đặt thành công.</p>
+          <p className="text-stone-600 font-medium">No orders yet</p>
+          <p className="text-stone-500 text-sm mt-2 mb-6">Your orders will appear here after successful placement.</p>
           <button
             type="button"
             onClick={() => navigate("/collection")}
             className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors"
           >
-            Mua sắm ngay
+            Shop Now
           </button>
         </div>
       ) : (
@@ -85,7 +91,7 @@ const Order = () => {
                   <span className="mx-2">·</span>
                   {order.paymentMethod}
                   <span className={`ml-2 font-semibold ${order.payment ? "text-emerald-600" : "text-amber-500"}`}>
-                    {order.payment ? "Đã thanh toán" : "Chưa thanh toán"}
+                    {order.payment ? "Paid" : "Unpaid"}
                   </span>
                 </div>
                 <div className="flex items-center gap-2">
@@ -118,7 +124,7 @@ const Order = () => {
               {/* Footer: tổng tiền + actions */}
               <div className="flex flex-wrap items-center justify-between gap-3 mt-4 pt-3 border-t border-stone-100">
                 <div className="text-sm">
-                  <span className="text-stone-500">{order.items.length} sản phẩm · Tổng: </span>
+                  <span className="text-stone-500">{order.items.length} items · Total: </span>
                   <span className="font-bold text-stone-900 text-base">{currency}{order.amount?.toLocaleString()}</span>
                 </div>
                 <div className="flex gap-2">
@@ -128,7 +134,7 @@ const Order = () => {
                       onClick={() => handleCancelOrder(order._id)}
                       className="text-sm font-medium text-red-600 px-4 py-2 rounded-lg border border-red-200 hover:bg-red-50 transition-colors"
                     >
-                      Hủy đơn
+                      Cancel
                     </button>
                   )}
                   {order.status === "Cancelled" && (
@@ -137,7 +143,7 @@ const Order = () => {
                       onClick={() => handleDeleteOrder(order._id)}
                       className="text-sm font-medium text-stone-500 px-4 py-2 rounded-lg border border-stone-200 hover:bg-stone-50 transition-colors"
                     >
-                      Xóa
+                      Delete
                     </button>
                   )}
                   <button
@@ -145,7 +151,7 @@ const Order = () => {
                     onClick={loadOrders}
                     className="text-sm font-medium text-stone-700 px-4 py-2 rounded-lg border border-stone-200 hover:bg-stone-50 transition-colors"
                   >
-                    Làm mới
+                    Refresh
                   </button>
                 </div>
               </div>

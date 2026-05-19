@@ -7,9 +7,9 @@ const Abouts = () => {
   return (
     <div className="pb-8">
       <div className="text-center pt-10 sm:pt-12 border-t">
-        <Title text1="VỀ" text2="CHÚNG TÔI" className="justify-center" />
+        <Title text1="ABOUT" text2="US" className="justify-center" />
         <p className="text-stone-500 text-sm mt-2 max-w-lg mx-auto">
-          Cửa hàng thời trang hiện đại, mang đến phong cách và sự tự tin cho bạn mỗi ngày.
+          Modern fashion store, bringing you style and confidence every day.
         </p>
       </div>
 
@@ -32,7 +32,7 @@ const Abouts = () => {
             or something special for an event, we have something for you.
           </p>
 
-          <b className="text-stone-900 text-lg">Sứ mệnh</b>
+          <b className="text-stone-900 text-lg">Our Mission</b>
           <p>
             Our mission is to help you express your personal style with confidence.
             We are committed to providing high-quality fashion products,
@@ -44,28 +44,28 @@ const Abouts = () => {
       </div>
 
       <div className="text-xl py-6">
-        <Title text1="VÌ SAO" text2="CHỌN CHÚNG TÔI" />
+        <Title text1="WHY" text2="CHOOSE US" />
       </div>
 
       <div className="flex flex-col md:flex-row text-sm mb-20 gap-4">
         <div className="flex-1 border border-stone-200 bg-white px-8 md:px-10 py-8 sm:py-12 flex flex-col gap-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-          <b className="text-lg text-stone-900">Thời trang xu hướng</b>
+          <b className="text-lg text-stone-900">Trendy Fashion</b>
           <p>
-            Cập nhật liên tục các mẫu quần áo mới nhất, phù hợp với phong cách hiện đại.
+            Constantly updated with the latest clothing styles, suitable for modern trends.
           </p>
         </div>
 
         <div className="flex-1 border border-stone-200 bg-white px-8 md:px-10 py-8 sm:py-12 flex flex-col gap-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-          <b className="text-lg text-stone-900">Chất lượng đảm bảo</b>
+          <b className="text-lg text-stone-900">Quality Guaranteed</b>
           <p>
-            Chất liệu thoải mái, đường may chắc chắn, đảm bảo độ bền và sự dễ chịu khi mặc.
+            Comfortable materials, solid stitching, ensuring durability and comfort when wearing.
           </p>
         </div>
 
         <div className="flex-1 border border-stone-200 bg-white px-8 md:px-10 py-8 sm:py-12 flex flex-col gap-4 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
-          <b className="text-lg text-stone-900">Dịch vụ tận tâm</b>
+          <b className="text-lg text-stone-900">Dedicated Service</b>
           <p>
-            Hỗ trợ tư vấn chọn size, mix đồ và chăm sóc khách hàng nhanh chóng, chuyên nghiệp.
+            Support for size selection, outfit coordination, and fast, professional customer care.
           </p>
         </div>
       </div>

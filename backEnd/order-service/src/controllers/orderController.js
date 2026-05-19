@@ -10,6 +10,7 @@ import {
   cancelUserOrder,
   deleteOrderUser,
   deleteCancelledOrder,
+  handleStripeWebhook,
 } from "../services/orderService.js";
 
 // Đặt đơn COD
@@ -179,5 +180,16 @@ export const deleteMyOrder = async (req, res) => {
   } catch (error) {
     console.log(error);
     res.json({ success: false, message: error.message });
+  }
+};
+
+export const stripeWebhook = async (req, res) => {
+  const signature = req.headers['stripe-signature'];
+  try {
+    await handleStripeWebhook(req.body, signature);
+    res.json({ received: true });
+  } catch (error) {
+    console.error('Stripe webhook error:', error.message);
+    res.status(400).json({ error: error.message });
   }
 };

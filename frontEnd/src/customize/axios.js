@@ -7,7 +7,7 @@ const axiosInstance = axios.create({
   timeout: 10000,
 });
 
-// Request interceptor — gắn access_token
+// Request interceptor — attach access_token
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("token");
@@ -19,7 +19,7 @@ axiosInstance.interceptors.request.use(
   (error) => Promise.reject(error)
 );
 
-// Response interceptor — tự động refresh khi 401
+// Response interceptor — auto refresh on 401
 let isRefreshing = false;
 let failedQueue = [];
 
@@ -39,7 +39,7 @@ axiosInstance.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       const refreshToken = localStorage.getItem("refresh_token");
 
-      // Không có refresh token → logout
+      // No refresh token → logout
       if (!refreshToken) {
         localStorage.removeItem("token");
         localStorage.removeItem("refresh_token");
@@ -48,7 +48,7 @@ axiosInstance.interceptors.response.use(
       }
 
       if (isRefreshing) {
-        // Đang refresh → queue request lại
+        // Currently refreshing → queue request
         return new Promise((resolve, reject) => {
           failedQueue.push({ resolve, reject });
         })

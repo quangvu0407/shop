@@ -99,7 +99,7 @@ ACTIONS:
 - "refine_search" — user phản hồi kết quả
 - "compare"       — user muốn so sánh ≥2 sản phẩm
 - "get_orders"    — user hỏi đơn hàng
-- "place_order"   — user xác nhận mua VÀ đủ địa chỉ
+- "place_order"   — user xác nhận mua. CHỈ dùng action này khi: (1) items có ít nhất 1 sản phẩm hợp lệ từ [SẢN PHẨM USER ĐÃ XEM], (2) đủ 5 trường địa chỉ: firstName, lastName, street, city, phone. Nếu thiếu sản phẩm → action="reply" hỏi user chọn sản phẩm. Nếu thiếu địa chỉ → action="reply" hỏi từng trường còn thiếu.
 - "reply"         — chào hỏi, tư vấn chung
 
 QUY TẮC SEARCH — QUAN TRỌNG:
@@ -248,7 +248,7 @@ const buildReplyWithProducts = async (
   intent,
   upsellQuery = null,
 ) => {
-  const productList = products.map(formatProduct).join("\n");
+  const productList = products.map(formatProduct).join("\n\n");
 
   const prefs = session.userPrefs || {};
   const prefsSummary = Object.entries(prefs)
@@ -320,23 +320,42 @@ export const sendMessage = async (userId, userMessage, authHeader) => {
     case "refine_search": {
       const query =
         intent.action === "refine_search" ? intent.refineQuery : intent.query;
-      const products = await searchProducts(query);
+
+      // Lấy category/subCategory từ prefs đã biết hoặc intent vừa extract
+      const prefs = session.userPrefs || {};
+      const gender = intent.extractedPrefs?.gender || prefs.gender || null;
+      const subCat = intent.extractedPrefs?.subCategory || prefs.subCategory || null;
+      // Map gender sang category của DB: Men | Women | Kids
+      const GENDER_MAP = { men: "Men", women: "Women", kids: "Kids", nam: "Men", nữ: "Women", "trẻ em": "Kids" };
+      const category = gender ? (GENDER_MAP[gender.toLowerCase()] ?? gender) : null;
+
+      // Parse budget → minPrice/maxPrice
+      const budget = intent.extractedPrefs?.budget || prefs.budget || null;
+      let minPrice, maxPrice;
+      if (budget) {
+        const under = /dưới|under|</.test(String(budget));
+        const over = /trên|over|>/.test(String(budget));
+        const num = parseFloat(String(budget).replace(/[^\d.]/g, "")) * (/k/i.test(String(budget)) ? 1000 : 1);
+        if (!isNaN(num)) {
+          if (under) maxPrice = num;
+          else if (over) minPrice = num;
+          else { minPrice = num * 0.8; maxPrice = num * 1.2; }
+        }
+      }
+
+      const searchOpts = { category, subCategory: subCat, minPrice, maxPrice };
+      const products = await searchProducts(query, searchOpts);
       updateSessionCache(session, products);
 
       if (!products.length) {
-        // Fallback: broader query (first word only)
+        // Fallback: bỏ category, search rộng hơn
         const broadQuery = query.split(" ")[0];
-        const fallback = await searchProducts(broadQuery);
+        const fallback = await searchProducts(broadQuery, searchOpts);
         if (fallback.length) {
           updateSessionCache(session, fallback);
           const upsell = UPSELL_RULES[broadQuery]?.[0] ?? null;
           assistantMessage = await buildReplyWithProducts(
-            session,
-            history,
-            userMessage,
-            fallback,
-            intent,
-            upsell,
+            session, history, userMessage, fallback, intent, upsell,
           );
           assistantMessage =
             `Không tìm thấy "${query}" chính xác, nhưng mình tìm được:\n\n` +
@@ -347,12 +366,7 @@ export const sendMessage = async (userId, userMessage, authHeader) => {
       } else {
         const upsell = UPSELL_RULES[intent.query]?.[0] ?? null;
         assistantMessage = await buildReplyWithProducts(
-          session,
-          history,
-          userMessage,
-          products,
-          intent,
-          upsell,
+          session, history, userMessage, products, intent, upsell,
         );
       }
       break;
@@ -406,13 +420,34 @@ export const sendMessage = async (userId, userMessage, authHeader) => {
 
     case "place_order": {
       const { items = [], firstName, lastName, street, city, phone } = intent;
+
+      // 1. Kiểm tra phải có sản phẩm
+      if (!items.length) {
+        assistantMessage =
+          "🛍️ Bạn chưa chọn sản phẩm nào. Hãy tìm sản phẩm trước rồi mình sẽ đặt hàng cho bạn nhé!";
+        break;
+      }
+
+      // 2. Kiểm tra productId hợp lệ (24-char hex)
       const invalidIds = items.filter(
         (i) => !/^[a-f\d]{24}$/i.test(i.productId),
       );
-
       if (invalidIds.length) {
         assistantMessage =
-          "❌ Vui lòng tìm và chọn sản phẩm trước để mình đặt hàng chính xác nhé!";
+          "❌ Sản phẩm không hợp lệ. Vui lòng tìm và chọn sản phẩm từ danh sách mình gợi ý nhé!";
+        break;
+      }
+
+      // 3. Kiểm tra đủ địa chỉ
+      const missingFields = [];
+      if (!firstName) missingFields.push("tên");
+      if (!lastName) missingFields.push("họ");
+      if (!street) missingFields.push("địa chỉ (số nhà, đường)");
+      if (!city) missingFields.push("thành phố");
+      if (!phone) missingFields.push("số điện thoại");
+
+      if (missingFields.length) {
+        assistantMessage = `📋 Để đặt hàng, bạn vui lòng cung cấp thêm: **${missingFields.join(", ")}** nhé!`;
         break;
       }
 

@@ -9,7 +9,7 @@ const Cart = () => {
   const [cartData, setCartData] = useState([]);
 
   useEffect(() => {
-    // Kiểm tra nếu cartItems là mảng và có dữ liệu products
+    // Check if cartItems is an array and has products data
     if (products.length > 0 && Array.isArray(cartItems)) {
       setCartData(cartItems);
     }
@@ -26,25 +26,25 @@ const Cart = () => {
     <div className="border-t pt-10 sm:pt-14 pb-16 min-h-[50vh] bg-gradient-to-b from-stone-50/60 to-white">
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8">
         <div>
-          <Title text1="GIỎ" text2="HÀNG" />
+          <Title text1="SHOPPING" text2="CART" />
           <p className="text-stone-500 text-sm mt-1">
-            Kiểm tra sản phẩm trước khi thanh toán.
+            Review your items before checkout.
           </p>
         </div>
       </div>
 
       {!hasItems ? (
         <div className="rounded-2xl border border-stone-200 bg-white p-12 text-center shadow-sm">
-          <p className="text-stone-600 font-medium">Giỏ hàng đang trống</p>
+          <p className="text-stone-600 font-medium">Your cart is empty</p>
           <p className="text-stone-500 text-sm mt-2 mb-6">
-            Thêm sản phẩm từ bộ sưu tập để tiếp tục mua sắm.
+            Add products from the collection to continue shopping.
           </p>
           <button
             type="button"
             onClick={() => navigate("/collection")}
             className="inline-flex items-center justify-center px-6 py-3 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors"
           >
-            Xem sản phẩm
+            View Products
           </button>
         </div>
       ) : (
@@ -105,7 +105,7 @@ const Cart = () => {
                     type="button"
                     onClick={() => updateQuantity(item.productId, item.size, 0)}
                     className="justify-self-end p-2 rounded-lg hover:bg-stone-100 transition-colors"
-                    aria-label="Xóa khỏi giỏ"
+                    aria-label="Remove from cart"
                   >
                     <img className="w-4 sm:w-5" src={assets.bin_icon} alt="" />
                   </button>
@@ -123,7 +123,7 @@ const Cart = () => {
                   onClick={() => navigate("/place-order")}
                   className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors"
                 >
-                  Thanh toán
+                  Checkout
                 </button>
               </div>
             </div>

@@ -38,17 +38,19 @@ const markdownComponents = {
     </a>
   ),
   strong: ({ children }) => <span className="font-semibold">{children}</span>,
-  p: ({ children }) => <p className="mb-1 last:mb-0">{children}</p>,
-  ul: ({ children }) => <ul className="list-disc list-inside space-y-0.5 my-1">{children}</ul>,
-  ol: ({ children }) => <ol className="list-decimal list-inside space-y-0.5 my-1">{children}</ol>,
-  li: ({ children }) => <li className="text-sm">{children}</li>,
+  p: ({ children }) => <p className="mb-2 last:mb-0 break-words whitespace-pre-wrap">{children}</p>,
+  br: () => <br />,
+  ul: ({ children }) => <ul className="list-disc list-inside space-y-1 my-1">{children}</ul>,
+  ol: ({ children }) => <ol className="list-decimal list-inside space-y-1 my-1">{children}</ol>,
+  li: ({ children }) => <li className="text-sm break-words">{children}</li>,
+  hr: () => <hr className="my-2 border-stone-200" />,
 };
 
 const Message = ({ msg }) => (
   <div className={`flex items-end gap-2 animate-fadeIn ${msg.role === "user" ? "justify-end" : "justify-start"}`}>
     {msg.role === "assistant" && <BotAvatar />}
     <div
-      className={`max-w-[78%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words ${msg.role === "user"
+      className={`max-w-[85%] px-3.5 py-2.5 rounded-2xl text-sm leading-relaxed break-words overflow-hidden ${msg.role === "user"
         ? "bg-gradient-to-br from-stone-800 to-stone-900 text-white rounded-br-sm shadow-md"
         : "bg-white text-stone-800 border border-stone-100 rounded-bl-sm shadow-sm"
         }`}
@@ -101,7 +103,7 @@ const ChatBot = () => {
       const res = await axiosInstance.get("/chat/welcome");
       if (res.success) setMessages([{ role: "assistant", content: res.content }]);
     } catch {
-      setMessages([{ role: "assistant", content: "Xin chào! Mình có thể giúp gì cho bạn? 😊" }]);
+      setMessages([{ role: "assistant", content: "Hello! How can I help you? 😊" }]);
     }
   };
 
@@ -116,13 +118,13 @@ const ChatBot = () => {
 
     try {
       if (!token) {
-        setMessages((prev) => [...prev, { role: "assistant", content: "Bạn cần đăng nhập để chat với mình nhé! 🔐" }]);
+        setMessages((prev) => [...prev, { role: "assistant", content: "You need to login to chat with me! 🔐" }]);
         return;
       }
       const res = await axiosInstance.post("/chat/message", { message: text });
       if (res.success) setMessages((prev) => [...prev, { role: "assistant", content: res.message }]);
     } catch {
-      setMessages((prev) => [...prev, { role: "assistant", content: "Xin lỗi, mình đang gặp sự cố. Thử lại sau nhé!" }]);
+      setMessages((prev) => [...prev, { role: "assistant", content: "Sorry, I'm having issues. Try again later!" }]);
     } finally {
       setLoading(false);
     }
@@ -130,7 +132,7 @@ const ChatBot = () => {
 
   const clearChat = async () => {
     if (token) { try { await axiosInstance.delete("/chat/clear"); } catch { /* ignore */ } }
-    setMessages([{ role: "assistant", content: "Cuộc trò chuyện đã được làm mới. Mình có thể giúp gì cho bạn? 😊" }]);
+    setMessages([{ role: "assistant", content: "Conversation has been refreshed. How can I help you? 😊" }]);
   };
 
   const handleKeyDown = (e) => {
@@ -173,7 +175,7 @@ const ChatBot = () => {
               <div className="flex items-center gap-1">
                 <button
                   onClick={clearChat}
-                  title="Làm mới"
+                  title="Refresh"
                   className="text-stone-400 hover:text-white transition-colors p-1.5 rounded-lg hover:bg-white/10"
                 >
                   <svg xmlns="http://www.w3.org/2000/svg" className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -206,7 +208,7 @@ const ChatBot = () => {
                   value={input}
                   onChange={handleInput}
                   onKeyDown={handleKeyDown}
-                  placeholder="Nhập tin nhắn..."
+                  placeholder="Type a message..."
                   rows={1}
                   className="flex-1 resize-none bg-transparent text-sm text-stone-800 placeholder-stone-400 focus:outline-none max-h-24 overflow-y-auto py-0.5"
                 />
@@ -220,7 +222,7 @@ const ChatBot = () => {
                   </svg>
                 </button>
               </div>
-              <p className="text-center text-[10px] text-stone-400 mt-2">Enter để gửi · Shift+Enter xuống dòng</p>
+              <p className="text-center text-[10px] text-stone-400 mt-2">Enter to send · Shift+Enter for new line</p>
             </div>
           </div>
         )}
@@ -229,7 +231,7 @@ const ChatBot = () => {
         <button
           onClick={() => setOpen((prev) => !prev)}
           className="relative w-10 h-10 rounded-full bg-gradient-to-br from-stone-800 to-stone-900 text-white shadow-xl hover:shadow-2xl transition-all hover:scale-105 flex items-center justify-center"
-          aria-label="Mở chatbot"
+          aria-label="Open chatbot"
         >
           {!open && (
             <span className="absolute inset-0 rounded-full bg-stone-700 animate-ping opacity-2" />

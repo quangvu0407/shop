@@ -45,9 +45,8 @@ export const getProducts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 15;
-    const { category, subCategory, search, sort } = req.query;
-
-    const result = await ProductPage({ page, limit, category, subCategory, search, sort });
+    const { category, subCategory, search, sort, minPrice, maxPrice } = req.query;
+    const result = await ProductPage({ page, limit, category, subCategory, search, sort, minPrice, maxPrice });
 
     res.json({ success: true, ...result });
   } catch (err) {

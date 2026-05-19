@@ -21,7 +21,7 @@ const Login = () => {
     try {
       if (currentState === "Sign Up") {
         if (password !== confirmPassword) {
-          toast.error("Mật khẩu xác nhận không khớp");
+          toast.error("Passwords do not match");
           return;
         }
         const res = await axiosInstance.post("/user/register", {
@@ -34,7 +34,7 @@ const Login = () => {
           setToken(res.access_token);
           localStorage.setItem("token", res.access_token);
           localStorage.setItem("refresh_token", res.refresh_token);
-          toast.success("Tạo tài khoản thành công!");
+          toast.success("Account created successfully!");
           setCurrentState("Login");
           setEmail("");
           setPassword("");
@@ -51,14 +51,14 @@ const Login = () => {
           setToken(res.access_token);
           localStorage.setItem("token", res.access_token);
           localStorage.setItem("refresh_token", res.refresh_token);
-          toast.success("Đăng nhập thành công");
+          toast.success("Login successful");
         } else {
           toast.error(res.message);
         }
       }
     } catch (error) {
       console.log(error);
-      toast.error(error?.response?.data?.message || error.message || "Có lỗi xảy ra");
+      toast.error(error?.response?.data?.message || error.message || "An error occurred");
     }
   };
 
@@ -72,14 +72,14 @@ const Login = () => {
     <div className="border-t min-h-[calc(100vh-10rem)] bg-gradient-to-b from-stone-50 to-white py-10 sm:py-14 px-4">
       <div className="max-w-md mx-auto text-center mb-8">
         <Title
-          text1={currentState === "Login" ? "ĐĂNG" : "ĐĂNG KÝ"}
-          text2={currentState === "Login" ? "NHẬP" : "TÀI KHOẢN"}
+          text1={currentState === "Login" ? "LOG" : "SIGN"}
+          text2={currentState === "Login" ? "IN" : "UP"}
           className="justify-center"
         />
         <p className="text-stone-500 text-sm mt-2">
           {currentState === "Login"
-            ? "Đăng nhập để theo dõi đơn hàng và giỏ hàng của bạn."
-            : "Tạo tài khoản mới — chỉ mất vài giây."}
+            ? "Login to track your orders and cart."
+            : "Create a new account — it only takes a few seconds."}
         </p>
       </div>
 
@@ -88,7 +88,7 @@ const Login = () => {
           {currentState === "Sign Up" && (
             <div>
               <label className="text-xs font-medium text-stone-500 uppercase tracking-wide">
-                Họ tên
+                Full Name
               </label>
               <input
                 onChange={(e) => setName(e.target.value)}
@@ -96,7 +96,7 @@ const Login = () => {
                 type="text"
                 required
                 className="mt-1.5 w-full px-4 py-3 rounded-xl border border-stone-200 bg-stone-50/50 focus:outline-none focus:ring-2 focus:ring-stone-800/15 focus:border-stone-400"
-                placeholder="Nguyễn Văn A"
+                placeholder="John Doe"
               />
             </div>
           )}
@@ -115,7 +115,7 @@ const Login = () => {
           </div>
           <div>
             <label className="text-xs font-medium text-stone-500 uppercase tracking-wide">
-              Mật khẩu
+              Password
             </label>
             <input
               onChange={(e) => setPassword(e.target.value)}
@@ -129,7 +129,7 @@ const Login = () => {
           {currentState === "Sign Up" && (
             <div>
               <label className="text-xs font-medium text-stone-500 uppercase tracking-wide">
-                Xác nhận mật khẩu
+                Confirm Password
               </label>
               <input
                 onChange={(e) => setConfirmPassword(e.target.value)}
@@ -143,14 +143,14 @@ const Login = () => {
           )}
 
           <div className="flex flex-wrap justify-between gap-2 text-sm text-stone-600 pt-1">
-            <span className="cursor-default text-stone-400">Quên mật khẩu?</span>
+            <span className="cursor-default text-stone-400">Forgot password?</span>
             {currentState === "Login" ? (
               <button
                 type="button"
                 onClick={() => setCurrentState("Sign Up")}
                 className="font-medium text-stone-900 hover:underline underline-offset-4"
               >
-                Tạo tài khoản
+                Create account
               </button>
             ) : (
               <button
@@ -158,7 +158,7 @@ const Login = () => {
                 onClick={() => setCurrentState("Login")}
                 className="font-medium text-stone-900 hover:underline underline-offset-4"
               >
-                Đã có tài khoản? Đăng nhập
+                Already have an account? Login
               </button>
             )}
           </div>
@@ -167,14 +167,14 @@ const Login = () => {
             type="submit"
             className="mt-2 w-full py-3.5 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors"
           >
-            {currentState === "Login" ? "Đăng nhập" : "Đăng ký"}
+            {currentState === "Login" ? "Login" : "Sign Up"}
           </button>
         </form>
 
         {/* Divider */}
         <div className="flex items-center gap-3 my-4">
           <div className="flex-1 h-px bg-stone-200" />
-          <span className="text-xs text-stone-400">hoặc</span>
+          <span className="text-xs text-stone-400">or</span>
           <div className="flex-1 h-px bg-stone-200" />
         </div>
 
@@ -186,7 +186,7 @@ const Login = () => {
           <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
             <path d="M24 12.073C24 5.405 18.627 0 12 0S0 5.405 0 12.073C0 18.1 4.388 23.094 10.125 24v-8.437H7.078v-3.49h3.047V9.41c0-3.025 1.792-4.697 4.533-4.697 1.312 0 2.686.236 2.686.236v2.97h-1.513c-1.491 0-1.956.93-1.956 1.886v2.267h3.328l-.532 3.49h-2.796V24C19.612 23.094 24 18.1 24 12.073z" />
           </svg>
-          Đăng nhập bằng Facebook
+          Login with Facebook
         </a>
       </div>
     </div>

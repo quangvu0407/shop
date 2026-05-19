@@ -35,14 +35,14 @@ const OrderDetail = ({ data, setOpen, setData }) => {
         <div className="p-6">
           {/* Header */}
           <div className="flex justify-center mb-6">
-            <Title text1="CHI TIẾT" text2="ĐƠN HÀNG" />
+            <Title text1="ORDER" text2="DETAILS" />
           </div>
 
-          {/* Danh sách thông tin theo hàng dọc */}
+          {/* Information list in vertical rows */}
           <div className="flex flex-col gap-4">
             <div className="border-b border-gray-50 pb-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                Sản phẩm
+                Product
               </label>
               <p className="text-gray-800 font-semibold leading-tight">
                 {data.name}
@@ -51,7 +51,7 @@ const OrderDetail = ({ data, setOpen, setData }) => {
 
             <div className="border-b border-gray-50 pb-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                Giá sản phẩm
+                Product Price
               </label>
               <p className="text-stone-700 font-medium">
                 {data.price?.toLocaleString("vi-VN")}đ × {data.quantity}
@@ -60,17 +60,17 @@ const OrderDetail = ({ data, setOpen, setData }) => {
 
             <div className="border-b border-gray-50 pb-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                Thông số
+                Specifications
               </label>
               <p className="text-gray-700 font-medium">
-                Size: {data.size} — SL: {data.quantity}
+                Size: {data.size} — Qty: {data.quantity}
               </p>
             </div>
 
             {data.orderAmount != null && (
               <div className="border-b border-gray-50 pb-2">
                 <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                  Tổng đơn hàng (gồm ship & khuyến mãi)
+                  Total Order (incl. shipping & promotions)
                 </label>
                 <p className="text-stone-900 font-bold text-lg">
                   {data.orderAmount?.toLocaleString("vi-VN")}đ
@@ -80,7 +80,7 @@ const OrderDetail = ({ data, setOpen, setData }) => {
 
             <div className="border-b border-gray-50 pb-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                Ngày đặt hàng
+                Order Date
               </label>
               <p className="text-gray-700">
                 {new Date(data.date).toLocaleDateString("vi-VN", {
@@ -93,19 +93,19 @@ const OrderDetail = ({ data, setOpen, setData }) => {
 
             <div className="border-b border-gray-50 pb-2">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-                Thanh toán
+                Payment
               </label>
               <p className="text-gray-700">{data.paymentMethod}</p>
               <p
                 className={`text-xs font-bold mt-1 ${data.payment ? "text-emerald-500" : "text-amber-500"}`}
               >
-                {data.payment ? "● Đã thanh toán" : "● Chưa thanh toán"}
+                {data.payment ? "● Paid" : "● Unpaid"}
               </p>
             </div>
 
             <div>
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mr-3">
-                Trạng thái vận chuyển
+                Shipping Status
               </label>
               <div
                 className={`mt-1 inline-block px-3 py-1 rounded-full text-xs font-bold border ${getStatusColor(data.status)}`}

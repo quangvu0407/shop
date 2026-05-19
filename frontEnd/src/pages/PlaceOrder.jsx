@@ -36,16 +36,16 @@ const PlaceOrder = () => {
   }, []);
 
   const handleSelectPromo = async (promo) => {
-    // Toggle off nếu đã chọn
+    // Toggle off if already selected
     if (appliedPercent?.promoId === String(promo._id)) { setAppliedPercent(null); return; }
     if (appliedFreeship?.promoId === String(promo._id)) { setAppliedFreeship(null); return; }
 
-    // Kiểm tra giới hạn loại
+    // Check type limit
     if (promo.type === "percent" && appliedPercent) {
-      toast.error("Chỉ được dùng 1 mã giảm % — bỏ mã cũ trước"); return;
+      toast.error("Only 1 discount code allowed — remove old code first"); return;
     }
     if (promo.type === "freeship" && appliedFreeship) {
-      toast.error("Chỉ được dùng 1 mã freeship — bỏ mã cũ trước"); return;
+      toast.error("Only 1 freeship code allowed — remove old code first"); return;
     }
 
     try {
@@ -86,7 +86,7 @@ const PlaceOrder = () => {
     event.preventDefault();
     try {
       if (!Array.isArray(cartItems) || cartItems.length === 0) {
-        toast.error("Giỏ hàng trống"); return;
+        toast.error("Cart is empty"); return;
       }
 
       const orderItemsRaw = await Promise.all(
@@ -103,7 +103,7 @@ const PlaceOrder = () => {
           const stock = Number(productInfo.quantity) || 0;
           const need = Number(cartItem.quantity) || 0;
           if (stock < need) {
-            throw new Error(`Sản phẩm "${productInfo.name}" không đủ hàng (còn ${stock}, cần ${need}).`);
+            throw new Error(`Product "${productInfo.name}" out of stock (available ${stock}, need ${need}).`);
           }
           return {
             productId: cartItem.productId,
@@ -116,7 +116,7 @@ const PlaceOrder = () => {
         })
       );
       const orderItems = orderItemsRaw.filter(Boolean);
-      if (orderItems.length === 0) { toast.error("Không có sản phẩm hợp lệ"); return; }
+      if (orderItems.length === 0) { toast.error("No valid products"); return; }
 
       const orderData = {
         address: formData,
@@ -142,11 +142,11 @@ const PlaceOrder = () => {
           break;
         }
         case "vnpay":
-          toast.info("VNPAY chưa được kích hoạt"); break;
+          toast.info("VNPAY not activated yet"); break;
         default: break;
       }
     } catch (error) {
-      toast.error(error?.response?.data?.message || error?.message || "Đặt hàng thất bại");
+      toast.error(error?.response?.data?.message || error?.message || "Order failed");
     }
   };
 
@@ -158,38 +158,38 @@ const PlaceOrder = () => {
       onSubmit={onSubmitHandler}
       className="flex flex-col lg:flex-row justify-between gap-10 lg:gap-16 pt-8 sm:pt-12 pb-20 min-h-[80vh] border-t bg-gradient-to-b from-stone-50/50 to-white"
     >
-      {/* ── Cột trái: địa chỉ ── */}
+      {/* ── Left column: address ── */}
       <div className="flex flex-col gap-4 w-full lg:max-w-[480px]">
         <div className="mb-1">
-          <Title text1="GIAO HÀNG" text2="TỚI ĐÂU" />
-          <p className="text-stone-500 text-sm mt-1">Điền địa chỉ nhận hàng chính xác để giao đúng hẹn.</p>
+          <Title text1="DELIVERY" text2="ADDRESS" />
+          <p className="text-stone-500 text-sm mt-1">Fill in the exact delivery address for on-time delivery.</p>
         </div>
         <div className="flex gap-3">
-          <input required onChange={onChangeHandler} name="firstName" value={formData.firstName} className={inputClass} type="text" placeholder="Tên" />
-          <input required onChange={onChangeHandler} name="lastName" value={formData.lastName} className={inputClass} type="text" placeholder="Họ" />
+          <input required onChange={onChangeHandler} name="firstName" value={formData.firstName} className={inputClass} type="text" placeholder="First Name" />
+          <input required onChange={onChangeHandler} name="lastName" value={formData.lastName} className={inputClass} type="text" placeholder="Last Name" />
         </div>
         <input required onChange={onChangeHandler} name="email" value={formData.email} className={inputClass} type="email" placeholder="Email" />
-        <input required onChange={onChangeHandler} name="street" value={formData.street} className={inputClass} type="text" placeholder="Địa chỉ (số nhà, đường)" />
+        <input required onChange={onChangeHandler} name="street" value={formData.street} className={inputClass} type="text" placeholder="Street Address" />
         <div className="flex gap-3">
-          <input required onChange={onChangeHandler} name="city" value={formData.city} className={inputClass} type="text" placeholder="Thành phố" />
-          <input required onChange={onChangeHandler} name="state" value={formData.state} className={inputClass} type="text" placeholder="Quận / Tỉnh" />
+          <input required onChange={onChangeHandler} name="city" value={formData.city} className={inputClass} type="text" placeholder="City" />
+          <input required onChange={onChangeHandler} name="state" value={formData.state} className={inputClass} type="text" placeholder="State / Province" />
         </div>
         <div className="flex gap-3">
-          <input required onChange={onChangeHandler} name="zipcode" value={formData.zipcode} className={inputClass} type="text" inputMode="numeric" placeholder="Mã bưu điện" />
-          <input required onChange={onChangeHandler} name="country" value={formData.country} className={inputClass} type="text" placeholder="Quốc gia" />
+          <input required onChange={onChangeHandler} name="zipcode" value={formData.zipcode} className={inputClass} type="text" inputMode="numeric" placeholder="Zip Code" />
+          <input required onChange={onChangeHandler} name="country" value={formData.country} className={inputClass} type="text" placeholder="Country" />
         </div>
-        <input required onChange={onChangeHandler} name="phone" value={formData.phone} className={inputClass} type="tel" inputMode="tel" placeholder="Số điện thoại" />
+        <input required onChange={onChangeHandler} name="phone" value={formData.phone} className={inputClass} type="tel" inputMode="tel" placeholder="Phone Number" />
       </div>
 
-      {/* ── Cột phải: tóm tắt + promo + thanh toán ── */}
+      {/* ── Right column: summary + promo + payment ── */}
       <div className="w-full lg:max-w-md lg:pt-2">
         <div className="rounded-2xl border border-stone-200 bg-white p-5 sm:p-6 shadow-sm">
           <CartTotal />
 
-          {/* ── Khuyến mãi ── */}
+          {/* ── Promotions ── */}
           <div className="mt-4 border-t border-stone-100 pt-4 space-y-3">
 
-            {/* Mã đã chọn */}
+            {/* Selected codes */}
             {appliedPercent && (
               <div className="flex items-center justify-between bg-orange-50 border border-orange-200 rounded-xl px-3 py-2 text-sm">
                 <span className="flex items-center gap-2 text-orange-700 font-mono font-bold">
@@ -201,25 +201,25 @@ const PlaceOrder = () => {
             {appliedFreeship && (
               <div className="flex items-center justify-between bg-green-50 border border-green-200 rounded-xl px-3 py-2 text-sm">
                 <span className="flex items-center gap-2 text-green-700 font-mono font-bold">
-                  <Truck size={14} /> {appliedFreeship.code} — Miễn phí vận chuyển
+                  <Truck size={14} /> {appliedFreeship.code} — Free Shipping
                 </span>
                 <button type="button" onClick={() => setAppliedFreeship(null)} className="text-green-400 hover:text-green-600"><X size={14} /></button>
               </div>
             )}
 
-            {/* Toggle danh sách */}
+            {/* Toggle list */}
             {availablePromos.length > 0 && (
               <button
                 type="button"
                 onClick={() => setShowPromoList(v => !v)}
                 className="w-full flex items-center justify-between px-4 py-2.5 rounded-xl border border-stone-200 hover:border-stone-400 text-sm font-medium text-stone-700 transition"
               >
-                <span>Chọn mã khuyến mãi ({availablePromos.length} mã)</span>
+                <span>Select promo code ({availablePromos.length} codes)</span>
                 {showPromoList ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
               </button>
             )}
             {availablePromos.length === 0 && (
-              <p className="text-xs text-stone-400 text-center py-1">Không có mã khuyến mãi nào</p>
+              <p className="text-xs text-stone-400 text-center py-1">No promo codes available</p>
             )}
 
             {/* Danh sách mã */}
@@ -285,15 +285,15 @@ const PlaceOrder = () => {
           </div>
         </div>
 
-        {/* ── Phương thức thanh toán ── */}
+        {/* ── Payment method ── */}
         <div className="mt-10">
-          <Title text1="THANH" text2="TOÁN" />
-          <p className="text-stone-500 text-sm mt-1 mb-4">Chọn phương thức thanh toán phù hợp.</p>
+          <Title text1="PAYMENT" text2="METHOD" />
+          <p className="text-stone-500 text-sm mt-1 mb-4">Choose a suitable payment method.</p>
           <div className="flex flex-col gap-3">
             {[
               { key: "stripe", label: <img className="h-5" src={assets.stripe_logo} alt="Stripe" /> },
               { key: "vnpay", label: <span className="text-sm font-medium text-stone-800">VNPAY</span> },
-              { key: "cod", label: <span className="text-sm font-medium text-stone-700">Thanh toán khi nhận hàng (COD)</span> },
+              { key: "cod", label: <span className="text-sm font-medium text-stone-700">Cash on Delivery (COD)</span> },
             ].map(({ key, label }) => (
               <button
                 key={key}
@@ -308,7 +308,7 @@ const PlaceOrder = () => {
           </div>
           <div className="w-full mt-8 flex justify-end">
             <button type="submit" className="w-full sm:w-auto sm:min-w-[200px] py-3.5 px-10 rounded-xl bg-stone-900 text-white text-sm font-medium hover:bg-stone-800 transition-colors">
-              Đặt hàng
+              Place Order
             </button>
           </div>
         </div>

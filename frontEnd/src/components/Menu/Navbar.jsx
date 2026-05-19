@@ -52,11 +52,11 @@ const Navbar = () => {
         </Link>
         <div className='group relative'>
           <img onClick={() => token ? navigate("/profile") : navigate("/login")} className='w-5 cursor-pointer' src={assets.profile_icon} alt='' />
-          <div className='group-hover:block hidden absolute right-0 pt-4 z-40'>
+          <div className="group-hover:block hidden absolute right-0 pt-4 z-40">
             <div className='flex flex-col gap-1 min-w-[10rem] py-2 px-1 rounded-xl border border-stone-200 bg-white text-stone-600 shadow-lg'>
-              <button type="button" onClick={() => token && navigate("/profile")} className='text-left text-sm px-3 py-2 rounded-lg hover:bg-stone-50 hover:text-stone-900 transition-colors'>Hồ sơ</button>
-              <button type="button" onClick={() => navigate("/orders")} className='text-left text-sm px-3 py-2 rounded-lg hover:bg-stone-50 hover:text-stone-900 transition-colors'>Đơn hàng</button>
-              <button type="button" onClick={logout} className='text-left text-sm px-3 py-2 rounded-lg hover:bg-stone-50 hover:text-stone-900 transition-colors'>Đăng xuất</button>
+              <button type="button" onClick={() => token && navigate("/profile")} className='text-left text-sm px-3 py-2 rounded-lg hover:bg-stone-50 hover:text-stone-900 transition-colors'>Profile</button>
+              <button type="button" onClick={() => navigate("/orders")} className='text-left text-sm px-3 py-2 rounded-lg hover:bg-stone-50 hover:text-stone-900 transition-colors'>Orders</button>
+              <button type="button" onClick={logout} className='text-left text-sm px-3 py-2 rounded-lg hover:bg-stone-50 hover:text-stone-900 transition-colors'>Logout</button>
             </div>
           </div>
         </div>
